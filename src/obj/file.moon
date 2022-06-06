@@ -86,7 +86,7 @@ class File extends StateObject
       'absent'
     }
 
-    @name = filepath
+    @name = path.expanduser filepath
     @path = path.expanduser filepath
     @ensure = state_tbl.ensure
 
