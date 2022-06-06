@@ -49,7 +49,7 @@ sandbox_export
   :pairs
   :tostring
 
-unless path.isfile ".moondot"
+unless path.isfile "#{os.getenv 'HOME'}/.moondot"
   print"please supply a .moondot file located at ~/.moondot"
   os.exit 1
 
