@@ -23,13 +23,11 @@ do
 -- @param _getters Read accessible fields
 getters = (cls, _getters) ->
   cls.__base.__index = (key) =>
-    num = nil
     if type(key) == 'number'
-      num = key
       key = '__number'
 
     if getter = _getters[key]
-      getter @, num
+      getter @, key
     else
       cls.__base[key]
 
