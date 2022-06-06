@@ -47,6 +47,7 @@ class StateObject
       "#{@__class.__name}[#{@name}]"
 
     -- Inject helper methods for state tracking as Class functions
+    child.__class.count = () -> #(data[child.__class].children)
     child.__class.fetch = (name) -> data[child.__class][name]
     child.__class.each = (fn) ->
       for k, v in pairs data[child.__class].children
