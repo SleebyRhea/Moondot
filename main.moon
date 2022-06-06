@@ -62,49 +62,47 @@ else
 print!
 
 emit "Beginning sync run ..."
-if Repo.count! > 0
-  run_with_margin ->
-    emit "Enforcing repository state ..."
-    run_with_margin -> Repo.each (r) ->
-      emit "#{r}: Pulling remote"
-      run_with_margin -> r\enforce!
+run_with_margin ->
+  if Repo.count! > 0
+      emit "Enforcing repository state ..."
+      run_with_margin -> Repo.each (r) ->
+        emit "#{r}: Pulling remote"
+        run_with_margin -> r\enforce!
 
-      switch r.state
-        when true
-          run_with_margin -> emit "State: %{green}Good"
-        when false
-          run_with_margin -> emit "State: %{red}Failed"
+        switch r.state
+          when true
+            run_with_margin -> emit "State: %{green}Good"
+          when false
+            run_with_margin -> emit "State: %{red}Failed"
 
-if File.count! > 0
-  run_with_margin ->
-    emit "Enforcing file state ..."
-    run_with_margin -> File.each (f) ->
+  if File.count! > 0
+      emit "Enforcing file state ..."
+      run_with_margin -> File.each (f) ->
+        if not f\check!
+          emit "#{f}: %{yellow}Needs update"
+          run_with_margin -> f\enforce!
+        else
+          emit "#{f}: %{green}Good"
+          return
+
+        switch f.state
+          when true
+            run_with_margin -> emit "State: %{green}Good"
+          when false
+            run_with_margin -> emit "State: %{red}Failed"
+
+  if Template.count! > 0
+    emit "Enforcing template state ..."
+    run_with_margin -> Template.each (f) ->
       if not f\check!
-        emit "#{f}: %{yellow}Needs update"
+        emit "#{f}: Needs update"
         run_with_margin -> f\enforce!
       else
         emit "#{f}: %{green}Good"
         return
 
       switch f.state
-        when true
+        when trued
           run_with_margin -> emit "State: %{green}Good"
         when false
           run_with_margin -> emit "State: %{red}Failed"
-
-if Template.count! > 0
-  run_with_margin ->
-  emit "Enforcing template state ..."
-  run_with_margin -> Template.each (f) ->
-    if not f\check!
-      emit "#{f}: Needs update"
-      run_with_margin -> f\enforce!
-    else
-      emit "#{f}: %{green}Good"
-      return
-
-    switch f.state
-      when trued
-        run_with_margin -> emit "State: %{green}Good"
-      when false
-        run_with_margin -> emit "State: %{red}Failed"
