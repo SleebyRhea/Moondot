@@ -63,11 +63,11 @@ class File extends StateObject
   trim_margin = (str, margin) ->
     return str if margin < 1
 
-    new_str, str_lines = '', strx.split str, '\n'
-    for _, line in ipairs str_lines
+    new_str, str_lines = '', strx.splitlines str
+    for i, line in ipairs str_lines
+      continue if i == 1 and line\match "^[%s\n\r]*$"
+      break if i == #str_lines and line\match "^[%s\n\r]*$"
       line = line\gsub "^#{var.indentation\rep margin}", ''
-      break if i == #str_lines and (line == '' or line\match "^%s+$")
-      continue if i == 1 and (line == '' or line\match "^%s+$")
       new_str ..= line .. "\n"
 
     return new_str
@@ -108,12 +108,13 @@ class File extends StateObject
       when 'source'
         if strx.at(state_tbl.source, 1) == '@'
           repo_name = strx.lstrip(strx.split(state_tbl.source,":")[1], '@')
+          repo_path = state_tbl.source\gsub "%@#{repo_name}%:", ''
           unless @repo = Repo.fetch repo_name
             @error "Missing required repo: #{repo_name}"
             return false
           if @repo.ensure != 'present'
             @error "Cannot reference repo marked as #{@repo.ensure}"
-          @source_file = "#{@repo.path}/#{@path}"
+          @source_file = "#{@repo.path}/#{repo_path}"
 
         else
           @source_file = path.expanduser state_tbl.source
@@ -137,16 +138,20 @@ class File extends StateObject
   --- Determine whether or not the File we are configuring on-system is up-to-date
   check: =>
     chk = ->
-      switch @kind
-        when 'directory'
-          unless path.isdir @path
-            return false
-        else
-          unless is_symlink @path
-            return false
+      if @kind == 'directory'
+        return false unless path.isdir @path
+        return true
 
-          unless path.link_attrib(@path).target == @source_file
-            return false
+      unless is_symlink @path
+        return false
+
+      unless path.link_attrib(@path).target == @source_file
+        return false
+
+      if @kind == 'inline'
+        unless md5.sum(@inline_data) == md5.sum(file.read @path)
+          return false
+
       return true
 
     @state = chk!
@@ -230,6 +235,9 @@ class Template extends File
     @source_file = "#{var.cache_dir}/.compiled/#{depath @path}"
 
   check: =>
+    if @kind == 'inline'
+      @inline_data = @rendered
+
     unless super!
       state = false
       return @state
