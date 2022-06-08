@@ -2,7 +2,7 @@ context = {}
 
 import
   need_type
-  from require"src.assertions"
+  from require"moondot.assertions"
 
 sandbox = (fn) ->
   need_type fn, 'function', 1

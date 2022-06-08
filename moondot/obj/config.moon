@@ -2,31 +2,31 @@ path = require"pl.path"
 
 import
   emit
-  from require"src.output"
+  from require"moondot.output"
 
 import
   ensure_path_exists
-  from require"src.utils"
+  from require"moondot.utils"
 
 import
   sandbox_export
-  from require"src.env"
+  from require"moondot.env"
 
 import
   getters
   setters
   private
-  immutable
-  from require"src.oo_ext"
+  readonly
+  from require"moondot.oo_ext"
 
 import
   need_one
   need_type
-  from require"src.assertions"
+  from require"moondot.assertions"
 
 import
   StateObject
-  from require"src.obj.stateobject"
+  from require"moondot.obj.stateobject"
 
 class Config extends StateObject
   data = private @
@@ -36,7 +36,7 @@ class Config extends StateObject
       data[@].value
 
   setters @,
-    validator: immutable
+    validator: readonly
     value: (want) =>
       data[@].value = data[@].validator want, data[@].value
 

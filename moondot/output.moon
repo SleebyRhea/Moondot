@@ -3,7 +3,7 @@ color = require"ansicolors"
 
 import
   need_type
-  from require"src.assertions"
+  from require"moondot.assertions"
 
 margin_size  = 0
 output_margin = ''

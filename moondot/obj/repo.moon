@@ -3,22 +3,22 @@ dir  = require"pl.dir"
 
 import
   StateObject
-  from require"src.obj.stateobject"
+  from require"moondot.obj.stateobject"
 
 import
   sandbox_export
-  from require"src.env"
+  from require"moondot.env"
 
 import
   depath
   repath
   ensure_path_exists
-  from require"src.utils"
+  from require"moondot.utils"
 
 import
   set
   var
-  from require"src.obj.config"
+  from require"moondot.obj.config"
 
 import
   executeex
@@ -27,11 +27,11 @@ import
 import
   need_one
   need_type
-  from require"src.assertions"
+  from require"moondot.assertions"
 
 import
   emit
-  from require"src.output"
+  from require"moondot.output"
 
 class Repo extends StateObject
   defaults = {
@@ -109,6 +109,15 @@ class Repo extends StateObject
     return true
 
 sandbox_export { repo: Repo }
+
+--process_object
+--  Repo: (cls) ->
+--    emit "Enforcing repository state ..."
+--    run_with_margin -> Repo.each (r) ->
+--      emit "#{r}: Pulling remote"
+--      run_with_margin ->
+--        r\enforce!
+--        emit_state r.state
 
 {
   :Repo

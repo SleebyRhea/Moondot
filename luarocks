@@ -1,0 +1,3 @@
+#!/bin/sh
+
+LUAROCKS_SYSCONFDIR='/opt/luarocks/etc/luarocks' exec '/opt/luajit/bin/luajit' -e 'package.path="/opt/luarocks/share/lua/5.1/?.lua;./?.lua;/opt/luajit/share/luajit-2.1.0-beta3/?.lua;/usr/local/share/lua/5.1/?.lua;/usr/local/share/lua/5.1/?/init.lua;/opt/luajit/share/lua/5.1/?.lua;/opt/luajit/share/lua/5.1/?/init.lua;/Users/awyatt/.luarocks/share/lua/5.1/?.lua;/Users/awyatt/.luarocks/share/lua/5.1/?/init.lua;/opt/luarocks/share/lua/5.1/?/init.lua";package.cpath="./?.so;/usr/local/lib/lua/5.1/?.so;/opt/luajit/lib/lua/5.1/?.so;/usr/local/lib/lua/5.1/loadall.so;/Users/awyatt/.luarocks/lib/lua/5.1/?.so;/opt/luarocks/lib/lua/5.1/?.so"' '/opt/luarocks/bin/luarocks' --project-tree /Users/awyatt/Source/Lua/dotfile-manager/lua_modules "$@"

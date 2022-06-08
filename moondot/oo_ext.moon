@@ -44,25 +44,16 @@ setters = (cls, _setters) ->
     else
       rawset @, key, val
 
-immutable = (cls, _, key) ->
-  error "#{cls.__class.__name}[].#{key} is immutable"
-
-what = (o) ->
-  _t = type(o)
-  unless _t == 'table' then return _t
-  return o.__class and o.__class.__name or 'table'
-
-is_a = (obj) =>
-  return false unless type(obj) == 'table' and type(obj.__class) == 'table'
-  return false unless obj.__class == @@
-  true
+--- Raise an error on access with a readonly message
+-- @param cls Class being accessed
+-- @param key Key being accessed
+readonly = (cls, _, key) ->
+  error "#{cls.__class.__name}[].#{key} is readonly"
 
 {
+  :private
   :getters
   :setters
   :callable
-  :immutable
-  :what
-  :is_a
-  :private
+  :readonly
 }

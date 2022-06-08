@@ -1,36 +1,36 @@
 path = require"pl.path"
 moon = require"moonscript.base"
-require"src.obj"
+require"moondot.obj"
 
 import
   sandbox
   sandbox_export
-  from require"src.env"
+  from require"moondot.env"
 
 import
   emit
   run_with_margin
-  from require"src.output"
+  from require"moondot.output"
 
 import
   for_os
   coalesce
   ensure_path_exists
-  from require"src.utils"
+  from require"moondot.utils"
 
 import
   set
   var
-  from require"src.obj.config"
+  from require"moondot.obj.config"
 
 import
   Repo
-  from require"src.obj.repo"
+  from require"moondot.obj.repo"
 
 import
   File
   Template
-  from require"src.obj.file"
+  from require"moondot.obj.file"
 
 sandbox_export
   block: (name, fn) ->
@@ -61,48 +61,46 @@ else
 
 print!
 
+need_update = (o) -> emit "#{o}: %{yellow}Needs update"
+
+emit_state = (bool) ->
+  switch bool
+    when true
+      emit "State: %{green}Good"
+    when false
+      emit "State: %{red}Failed"
+
 emit "Beginning sync run ..."
 run_with_margin ->
+  emit "Using cache: #{var.cache_dir}"
   if Repo.count! > 0
       emit "Enforcing repository state ..."
       run_with_margin -> Repo.each (r) ->
         emit "#{r}: Pulling remote"
-        run_with_margin -> r\enforce!
+        run_with_margin ->
+          r\enforce!
+          emit_state r.state
 
-        switch r.state
-          when true
-            run_with_margin -> emit "State: %{green}Good"
-          when false
-            run_with_margin -> emit "State: %{red}Failed"
 
   if File.count! > 0
       emit "Enforcing file state ..."
       run_with_margin -> File.each (f) ->
         if not f\check!
-          emit "#{f}: %{yellow}Needs update"
+          need_update f
           run_with_margin -> f\enforce!
         else
           emit "#{f}: %{green}Good"
           return
-
-        switch f.state
-          when true
-            run_with_margin -> emit "State: %{green}Good"
-          when false
-            run_with_margin -> emit "State: %{red}Failed"
+        run_with_margin -> emit_state f.state
 
   if Template.count! > 0
     emit "Enforcing template state ..."
     run_with_margin -> Template.each (f) ->
       if not f\check!
-        emit "#{f}: Needs update"
+        need_update f
         run_with_margin -> f\enforce!
       else
         emit "#{f}: %{green}Good"
         return
 
-      switch f.state
-        when trued
-          run_with_margin -> emit "State: %{green}Good"
-        when false
-          run_with_margin -> emit "State: %{red}Failed"
+      run_with_margin -> emit_state f.state

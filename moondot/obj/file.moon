@@ -10,18 +10,18 @@ import
 
 import
   sandbox_export
-  from require"src.env"
+  from require"moondot.env"
 
 import
   getters
   setters
   private
-  from require"src.oo_ext"
+  from require"moondot.oo_ext"
 
 import
   emit
   add_margin
-  from require"src.output"
+  from require"moondot.output"
 
 import
   depath
@@ -33,21 +33,21 @@ import
   replace_home
   make_symlink
   ensure_path_exists
-  from require"src.utils"
+  from require"moondot.utils"
 
 import
   StateObject
-  from require"src.obj.stateobject"
+  from require"moondot.obj.stateobject"
 
 import
   Config
   set
   var
-  from require"src.obj.config"
+  from require"moondot.obj.config"
 
 import
   Repo
-  from require"src.obj.repo"
+  from require"moondot.obj.repo"
 
 
 -- @todo Replicate the current functionality for in-line templates with margins
@@ -149,7 +149,8 @@ class File extends StateObject
         return false
 
       if @kind == 'inline'
-        unless md5.sum(@inline_data) == md5.sum(file.read @path)
+        contents = file.read @path
+        unless contents == @inline_data
           return false
 
       return true

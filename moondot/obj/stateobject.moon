@@ -6,17 +6,17 @@ import
 
 import
   valid_input
-  from require"src.utils"
+  from require"moondot.utils"
 
 import
   getters
   setters
   private
-  from require"src.oo_ext"
+  from require"moondot.oo_ext"
 
 import
   emit
-  from require"src.output"
+  from require"moondot.output"
 
 class StateObject
   data = private @
@@ -46,7 +46,8 @@ class StateObject
     child.__class.__base.__tostring = =>
       "#{@__class.__name}[#{@name}]"
 
-    -- Inject helper methods for state tracking as Class functions
+    -- Inject helper methods for state tracking as simple Class functions
+    -- These are done here, as they are not intended to be methods
     child.__class.count = () -> #(data[child.__class].children)
     child.__class.fetch = (name) -> data[child.__class][name]
     child.__class.each = (fn) ->
