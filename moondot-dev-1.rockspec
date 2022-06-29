@@ -12,6 +12,7 @@ dependencies = {
   "moonscript",
   "ansicolors",
   "penlight",
+  "md5"
 }
 build = {
   type = "builtin",
