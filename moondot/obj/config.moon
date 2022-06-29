@@ -1,28 +1,8 @@
 path = require"pl.path"
 
-import
-  emit
-  from require"moondot.output"
-
-import
-  ensure_path_exists
-  from require"moondot.utils"
-
-import
-  sandbox_export
-  from require"moondot.env"
-
-import
-  getters
-  setters
-  private
-  readonly
-  from require"moondot.oo_ext"
-
-import
-  need_one
-  need_type
-  from require"moondot.assertions"
+import sandbox_export from require"moondot.env"
+import getters, setters, private, readonly from require"moondot.oo_ext"
+import need_type from require"moondot.assertions"
 
 import
   StateObject

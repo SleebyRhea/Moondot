@@ -1,22 +1,6 @@
+import private from require"moondot.oo_ext"
+import emit from require"moondot.output"
 color = require"ansicolors"
-
-import
-  dump
-  from require"pl.pretty"
-
-import
-  valid_input
-  from require"moondot.utils"
-
-import
-  getters
-  setters
-  private
-  from require"moondot.oo_ext"
-
-import
-  emit
-  from require"moondot.output"
 
 class StateObject
   data = private @

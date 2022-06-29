@@ -4,24 +4,13 @@ file  = require"pl.file"
 strx  = require"pl.stringx"
 md5   = require"md5"
 
-import
-  dump
-  from require"pl.pretty"
-
-import
-  sandbox_export
-  from require"moondot.env"
-
-import
-  getters
-  setters
-  private
-  from require"moondot.oo_ext"
-
-import
-  emit
-  add_margin
-  from require"moondot.output"
+import dump from require"pl.pretty"
+import sandbox_export from require"moondot.env"
+import getters, setters, private from require"moondot.oo_ext"
+import emit, add_margin from require"moondot.output"
+import StateObject from require"moondot.obj.stateobject"
+import Config, set, var from require"moondot.obj.config"
+import Repo from require"moondot.obj.repo"
 
 import
   depath
@@ -35,25 +24,6 @@ import
   ensure_path_exists
   from require"moondot.utils"
 
-import
-  StateObject
-  from require"moondot.obj.stateobject"
-
-import
-  Config
-  set
-  var
-  from require"moondot.obj.config"
-
-import
-  Repo
-  from require"moondot.obj.repo"
-
-
--- @todo Replicate the current functionality for in-line templates with margins
--- @todo Use leafos tableshape to make this a much more resilient (and easily extensible) class
---
---
 class File extends StateObject
   Config "indentation", '  ', (want) -> want
 

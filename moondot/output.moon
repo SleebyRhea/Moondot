@@ -1,9 +1,6 @@
-strx  = require"pl.stringx"
 color = require"ansicolors"
 
-import
-  need_type
-  from require"moondot.assertions"
+import need_type from require"moondot.assertions"
 
 margin_size  = 0
 output_margin = ''

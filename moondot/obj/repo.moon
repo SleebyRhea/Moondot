@@ -1,59 +1,30 @@
 path = require"pl.path"
-dir  = require"pl.dir"
 
-import
-  StateObject
-  from require"moondot.obj.stateobject"
-
-import
-  sandbox_export
-  from require"moondot.env"
-
-import
-  depath
-  repath
-  ensure_path_exists
-  from require"moondot.utils"
-
-import
-  set
-  var
-  from require"moondot.obj.config"
-
-import
-  executeex
-  from require"pl.utils"
-
-import
-  need_one
-  need_type
-  from require"moondot.assertions"
-
-import
-  emit
-  from require"moondot.output"
+import StateObject from require"moondot.obj.stateobject"
+import sandbox_export from require"moondot.env"
+import depath, ensure_path_exists from require"moondot.utils"
+import var from require"moondot.obj.config"
+import executeex from require"pl.utils"
+import need_type from require"moondot.assertions"
+import emit from require"moondot.output"
 
 class Repo extends StateObject
-  defaults = {
-    git: "https://github.com"
-  }
-
   clone = (url, rpath) ->
-    ok, code, out, err = executeex "git clone #{url} #{rpath}"
+    ok, _, out, err = executeex "git clone #{url} #{rpath}"
     unless ok
       err = "#{out}\n#{err}" if out != ''
 
     return ok, err
 
   fetch = (rpath) ->
-    ok, code, out, err = executeex "cd #{rpath} && git fetch"
+    ok, _, out, err = executeex "cd #{rpath} && git fetch"
     unless ok
       err = "#{out}\n#{err}" if out != ''
 
     return ok, err
 
   pull = (rpath) ->
-    ok, code, out, err = executeex "cd #{rpath} && git pull"
+    ok, _, out, err = executeex "cd #{rpath} && git pull"
     unless ok
       err = "#{out}\n#{err}" if out != ''
 
@@ -109,15 +80,6 @@ class Repo extends StateObject
     return true
 
 sandbox_export { repo: Repo }
-
---process_object
---  Repo: (cls) ->
---    emit "Enforcing repository state ..."
---    run_with_margin -> Repo.each (r) ->
---      emit "#{r}: Pulling remote"
---      run_with_margin ->
---        r\enforce!
---        emit_state r.state
 
 {
   :Repo

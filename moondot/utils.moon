@@ -3,18 +3,9 @@ dir  = require"pl.dir"
 strx = require"pl.stringx"
 path = require"pl.path"
 
-import
-  emit
-  from require"moondot.output"
-
-import
-  executeex
-  from require"pl.utils"
-
-import
-  need_one
-  need_type
-  from require"moondot.assertions"
+import emit from require"moondot.output"
+import executeex from require"pl.utils"
+import need_one, need_type from require"moondot.assertions"
 
 
 --- Validate the variable provided against a list of valid options, with a fallback

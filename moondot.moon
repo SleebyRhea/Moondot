@@ -1,36 +1,14 @@
-path = require"pl.path"
 moon = require"moonscript.base"
+path = require"pl.path"
+
 require"moondot.obj"
 
-import
-  sandbox
-  sandbox_export
-  from require"moondot.env"
-
-import
-  emit
-  run_with_margin
-  from require"moondot.output"
-
-import
-  for_os
-  coalesce
-  ensure_path_exists
-  from require"moondot.utils"
-
-import
-  set
-  var
-  from require"moondot.obj.config"
-
-import
-  Repo
-  from require"moondot.obj.repo"
-
-import
-  File
-  Template
-  from require"moondot.obj.file"
+import sandbox, sandbox_export from require"moondot.env"
+import emit, run_with_margin from require"moondot.output"
+import for_os, coalesce from require"moondot.utils"
+import var from require"moondot.obj.config"
+import Repo from require"moondot.obj.repo"
+import File, Template from require"moondot.obj.file"
 
 sandbox_export
   block: (name, fn) ->
@@ -45,15 +23,17 @@ sandbox_export
   windows: (fn) ->
     for_os 'bsd', fn
   :coalesce
+  :tostring
+  :string
   :ipairs
   :pairs
-  :tostring
+  :table
 
 unless path.isfile "#{os.getenv 'HOME'}/.moondot"
   print"please supply a .moondot file located at ~/.moondot"
   os.exit 1
 
-if conf = moon.loadfile"#{os.getenv 'HOME'}/.moondot"
+if conf = moon.loadfile "#{os.getenv 'HOME'}/.moondot"
   sandbox conf
 else
   print"please supply a valid .moondot file located at ~/.moondot"
@@ -61,7 +41,8 @@ else
 
 print!
 
-need_update = (o) -> emit "#{o}: %{yellow}Needs update"
+need_update = (o) ->
+  emit "#{o}: %{yellow}Needs update"
 
 emit_state = (bool) ->
   switch bool
