@@ -38,7 +38,6 @@ depath = (filepath) ->
 -- @see depath
 repath = (depathed) ->
   need_type depathed, 'string', 1
-
   strx.replace depathed, "@", path.sep
 
 
@@ -134,7 +133,21 @@ ensure_path_exists = (fpath) ->
   return true
 
 
+--- Trim the margins from a given string. Uses the configured Config[indentation]
+-- @param str String to trim the left margin off of
+-- @param margin Number of instances of Config[indentation] to strip
+trim = (indent, str) ->
+  new_str, str_lines = '', strx.splitlines str
+  for i, line in ipairs str_lines
+    continue if i == 1 and line\match "^[%s\n\r]*$"
+    break if i == #str_lines and line\match "^[%s\n\r]*$"
+    line = line\gsub "^#{indent}", ''
+    new_str ..= line .. "\n"
+
+  return new_str
+
 {
+  :trim
   :for_os
   :need_one
   :coalesce
