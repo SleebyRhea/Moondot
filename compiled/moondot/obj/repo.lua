@@ -16,10 +16,10 @@ do
   local _obj_0 = require("moondot.output")
   emit, run_with_margin, insert_margin = _obj_0.emit, _obj_0.run_with_margin, _obj_0.insert_margin
 end
-local for_os, depath, repath, need_one, is_symlink, valid_input, replace_home, make_symlink, ensure_path_exists
+local trim, for_os, depath, repath, need_one, is_symlink, valid_input, replace_home, make_symlink, ensure_path_exists
 do
   local _obj_0 = require("moondot.utils")
-  for_os, depath, repath, need_one, need_type, is_symlink, valid_input, replace_home, make_symlink, ensure_path_exists = _obj_0.for_os, _obj_0.depath, _obj_0.repath, _obj_0.need_one, _obj_0.need_type, _obj_0.is_symlink, _obj_0.valid_input, _obj_0.replace_home, _obj_0.make_symlink, _obj_0.ensure_path_exists
+  trim, for_os, depath, repath, need_one, need_type, is_symlink, valid_input, replace_home, make_symlink, ensure_path_exists = _obj_0.trim, _obj_0.for_os, _obj_0.depath, _obj_0.repath, _obj_0.need_one, _obj_0.need_type, _obj_0.is_symlink, _obj_0.valid_input, _obj_0.replace_home, _obj_0.make_symlink, _obj_0.ensure_path_exists
 end
 local Repo
 do
@@ -249,6 +249,9 @@ do
           vars = { },
           env = {
             prefix = self.prefix,
+            del_var = function(key)
+              contexts[self].vars[key] = ''
+            end,
             set_var = function(key, val)
               contexts[self].vars[key] = val
             end,
@@ -280,7 +283,9 @@ do
               end
               command_str = "cd " .. tostring(self.path) .. " && " .. tostring(command_str)
               local ok, _, out, err = executeex(command_str)
-              return assert(ok, tostring(cmd) .. ": " .. tostring(out) .. " (err:" .. tostring(err) .. ")")
+              assert(ok, tostring(cmd) .. ": " .. tostring(out) .. " (err:" .. tostring(err) .. ")")
+              out = insert_margin(out)
+              return print(trim('', out))
             end,
             file = {
               replace_lines = function(_file, repl, want, conf)
@@ -333,7 +338,8 @@ do
               return set_context(self, state_tbl.builder)
             end)
             if not (ok) then
-              self:error(insert_margin(err))
+              err = insert_margin(err)
+              self:error(trim('', err))
               self.state = false
             end
           end)

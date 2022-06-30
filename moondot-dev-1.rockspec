@@ -12,6 +12,7 @@ dependencies = {
   "moonscript",
   "ansicolors",
   "penlight",
+  "etlua",
   "md5"
 }
 build = {
@@ -22,6 +23,7 @@ build = {
     ["moondot.obj.config"] = "compiled/moondot/obj/config.lua",
     ["moondot.obj.file"] = "compiled/moondot/obj/file.lua",
     ["moondot.obj.repo"] = "compiled/moondot/obj/repo.lua",
+    ["moondot.obj.rock"] = "compiled/moondot/obj/rock.lua",
     ["moondot.obj.stateobject"] = "compiled/moondot/obj/stateobject.lua",
     ["moondot.env"] = "compiled/moondot/env.lua",
     ["moondot.utils"] = "compiled/moondot/utils.lua",

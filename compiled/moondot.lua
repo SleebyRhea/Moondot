@@ -1,6 +1,7 @@
 local moondot_version = 'dev-1.0'
 local moon = require("moonscript.base")
 local path = require("pl.path")
+local file = require("pl.file")
 local dir = require("pl.dir")
 local parse_file = tostring(os.getenv('HOME')) .. "/.moondot"
 local plugin_dir = tostring(os.getenv('HOME')) .. "/.moondot.d"
@@ -15,10 +16,10 @@ do
   local _obj_0 = require("moondot.output")
   emit, run_with_margin = _obj_0.emit, _obj_0.run_with_margin
 end
-local for_os, coalesce, trim
+local for_os, coalesce, trim, repath
 do
   local _obj_0 = require("moondot.utils")
-  for_os, coalesce, trim = _obj_0.for_os, _obj_0.coalesce, _obj_0.trim
+  for_os, coalesce, trim, repath = _obj_0.for_os, _obj_0.coalesce, _obj_0.trim, _obj_0.repath
 end
 local set, var, Config
 do
@@ -97,6 +98,7 @@ if path.isdir(plugin_dir) then
   local _list_0 = dir.getfiles(plugin_dir, "plugin_*.moon")
   for _index_0 = 1, #_list_0 do
     local file = _list_0[_index_0]
+    file = path.basename(file)
     local plugin = file:gsub("^plugin_([a-zA-Z0-9_-]+).moon$", '%1')
     require("plugin_" .. tostring(plugin))
     emit("Loaded plugin " .. tostring(plugin))
@@ -154,7 +156,7 @@ emit_state = function(bool)
   end
 end
 emit("Beginning sync run ...")
-return run_with_margin(function()
+run_with_margin(function()
   return StateObject.each(function(o)
     if o.check and o.enforce then
       local ok, reason = o:check()
@@ -176,3 +178,18 @@ return run_with_margin(function()
     end
   end)
 end)
+if path.isdir(tostring(var.cache_dir) .. "/.compiled") then
+  local _list_0 = dir.getfiles(tostring(var.cache_dir) .. "/.compiled")
+  for _index_0 = 1, #_list_0 do
+    local cached_name = _list_0[_index_0]
+    local link_name = repath(cached_name)
+    if path.link_attrib(link_name) == cached_name then
+      if not (File.fetch(link_name) or Template.fetch(link_name)) then
+        file.delete(cached_name)
+        emit("Cleared stale cache file: " .. tostring(cached_name))
+        require("pl.util").executeex("unlink " .. tostring(link_name))
+        emit("Cleared stale link: " .. tostring(link_name))
+      end
+    end
+  end
+end
