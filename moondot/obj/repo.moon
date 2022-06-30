@@ -31,8 +31,6 @@ class Repo extends StateObject
     for a in *({...})
       exec_str ..= " #{a}"
 
-    repo_name = repath rpath\match ".+/([^/]+)$"
-
     ok, _, out, err = executeex exec_str
     unless ok
       err = "#{out}\n#{err}" if out != ''
@@ -124,7 +122,7 @@ class Repo extends StateObject
             @error "git: #{err}"
             return false
 
-        if @branch and @branch != ''
+        if @checkout and @checkout != ''
           emit "git-checkout #{@}"
           ok, err = git.checkout @path, @branch
           unless ok
@@ -143,8 +141,9 @@ class Repo extends StateObject
           return false
         commit = strx.strip commit, ' \n\r'
 
-        assert file.write( "#{@metadata}/commit", commit)
-        assert file.write( "#{@metadata}/branch", branch)
+        emit "Updated metadata"
+        assert file.write("#{@metadata}/commit", commit)
+        assert file.write("#{@metadata}/branch", branch)
 
       when 'absent'
         if path.isdir @path
