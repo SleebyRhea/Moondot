@@ -22,9 +22,6 @@ import
   ensure_path_exists
   from require"moondot.utils"
 
--- TODO: Design env such that items like env.git.#{command} will automatically run inside
---       of the repositories repo path
-
 class Repo extends StateObject
   contexts = {}
 
@@ -151,7 +148,9 @@ class Repo extends StateObject
                     continue
                 new_file ..= "\n#{line}"
 
-              assert file.write(file_path, new_file)
+              if replaced > 0
+                assert file.write(file_path, new_file)
+                emit "#{_file}: Replaced #{replaced} line#{replaced > 1 and 's' or ''}"
           }
         }
       }
