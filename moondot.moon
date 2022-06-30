@@ -2,7 +2,9 @@ moondot_version = 'dev-1.0'
 
 moon = require"moonscript.base"
 path = require"pl.path"
+dir  = require"pl.dir"
 parse_file = "#{os.getenv 'HOME'}/.moondot"
+plugin_dir = "#{os.getenv 'HOME'}/.moondot.d"
 
 require"moondot.obj"
 
@@ -19,11 +21,13 @@ flags_allowed = {
   help: "h"
   usage: "u"
   version: "V"
+  "plugin-dir": 'p'
 }
 
 flags_w_values = {
   'setvar'
   'file'
+  'plugin-dir'
 }
 
 flags, params = require"pl.app".parse_args arg, flags_w_values, flags_allowed
@@ -39,9 +43,16 @@ if flags
         moondot [options <values>] VAR=VAL VAR2=VAL2 ...
 
       Flags
-        -h --help        This help text
-        -f --file        File to parse (default: ~/.moondot)
-        -V --version     Version string
+        -h --help         This help text
+        -f --file         File to parse (default: ~/.moondot)
+        -p --plugin-dir   Set plugin directory (default: ~/.moondot.d/)
+        -V --version      Version string
+
+      Plugins
+        Moondot supports plugin moonscript files when placed within the currently
+        configured plugin directory. By default, said directory is ~/.moondot.d
+        and the required file name pattern is plugin_${name}.${extension}
+
     ]]
     os.exit 0
 
@@ -52,11 +63,21 @@ if flags
     print moondot_version
     os.exit 0
 
+  if flags['plugin-dir']
+    plugin_dir = flags['plugin-dir']
+
   for p in *params
     key, val = p\match "^([a-zA-Z0-9_-]+)=([a-zA-Z0-9_-]+)$"
     if key and val
       unless set key, val
         Config key, val, (v) -> v
+
+if path.isdir plugin_dir
+  package.moonpath = "#{plugin_dir}/?.moon;#{package.moonpath}"
+  for file in *dir.getfiles(plugin_dir, "plugin_*.moon")
+    plugin = file\gsub "^plugin_([a-zA-Z0-9_-]+).moon$", '%1'
+    require "plugin_#{plugin}"
+    emit "Loaded plugin #{plugin}"
 
 sandbox_export
   block: (name, fn) ->
