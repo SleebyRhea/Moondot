@@ -126,6 +126,7 @@ class Repo extends StateObject
             command_str = "cd #{@path} && #{command_str}"
             ok, _, out, err = executeex command_str
             assert ok, "#{cmd}: #{out} (err:#{err})"
+            print insert_margin out
           file: {
             replace_lines: (_file, repl, want, conf) ->
               need_type _file, 'string', 1
