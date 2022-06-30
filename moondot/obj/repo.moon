@@ -10,6 +10,7 @@ import need_type from require"moondot.assertions"
 import emit, run_with_margin, insert_margin from require"moondot.output"
 
 import
+  trim
   for_os
   depath
   repath
@@ -106,6 +107,8 @@ class Repo extends StateObject
         vars: {}
         env: {
           prefix: @prefix
+          del_var: (key) ->
+            contexts[@].vars[key] = ''
           set_var: (key, val) ->
             contexts[@].vars[key] = val
           git: setmetatable {}, __index: (_, cmd) -> (...) ->
@@ -126,7 +129,8 @@ class Repo extends StateObject
             command_str = "cd #{@path} && #{command_str}"
             ok, _, out, err = executeex command_str
             assert ok, "#{cmd}: #{out} (err:#{err})"
-            print insert_margin out
+            out = insert_margin out
+            print trim '', out
           file: {
             replace_lines: (_file, repl, want, conf) ->
               need_type _file, 'string', 1
@@ -167,7 +171,8 @@ class Repo extends StateObject
         run_with_margin ->
           ok, err = pcall -> set_context @, state_tbl.builder
           unless ok
-            @error insert_margin err
+            err = insert_margin err
+            @error trim '', err
             @state = false
 
       @cleaner = ->
