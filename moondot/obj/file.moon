@@ -109,27 +109,27 @@ class File extends StateObject
   check: =>
     chk = ->
       if @kind == 'directory'
-        return false unless path.isdir @path
+        return false, 'Path is not a directory' unless path.isdir @path
         return true
 
       unless is_symlink @path
-        return false
+        return false, 'Path is not a symlink'
 
       unless path.link_attrib(@path).target == @source_file
-        return false
+        return false, 'Symlink is incorrectly linked'
 
       if @kind == 'inline'
         contents = file.read @path
         unless contents == @inline_data
-          return false
+          return false, 'Contents do not match cached data'
 
       return true
 
-    @state = chk!
+    @state, reason = chk!
     if @ensure == 'absent'
       @state = not @state
 
-    return @state
+    return @state, reason
 
   --- Generate a function to update the File on-system if necessary
   enforce: () => switch @ensure
@@ -209,13 +209,14 @@ class Template extends File
     if @kind == 'inline'
       @inline_data = @rendered
 
-    unless super!
+    ok, reason = super!
+    unless ok
       state = false
-      return @state
+      return @state, reason
 
     unless md5.sum(@rendered) == md5.sum(file.read @path)
       state = false
-      return @state
+      return @state, 'Path does not match cached data'
 
     return true
 

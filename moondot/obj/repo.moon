@@ -196,7 +196,7 @@ class Repo extends StateObject
     chk = ->
       @needs_build = true
 
-      return false, "Not a valid repository" unless is_repo @path
+      return false, "Repo filepath is not a valid repository" unless is_repo @path
       return false, "Can't create #{@metadata}" unless ensure_path_exists @metadata
       return false, "Missing commit metadata" unless path.isfile "#{@metadata}/commit"
       return false, "Missing branch metadata" unless path.isfile "#{@metadata}/branch"
