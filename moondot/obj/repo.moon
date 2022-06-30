@@ -4,22 +4,17 @@ strx = require"pl.stringx"
 
 import StateObject from require"moondot.obj.stateobject"
 import sandbox_export from require"moondot.env"
-import depath, repath, ensure_path_exists from require"moondot.utils"
+import for_os, depath, ensure_path_exists from require"moondot.utils"
 import var from require"moondot.obj.config"
 import executeex from require"pl.utils"
 import need_type from require"moondot.assertions"
-import emit from require"moondot.output"
+import emit, run_with_margin, insert_margin from require"moondot.output"
 
 -- TODO: Design env such that items like env.git.#{command} will automatically run inside
 --       of the repositories repo path
 
 class Repo extends StateObject
-  clone = (url, rpath) ->
-    ok, _, out, err = executeex "git clone #{url} #{rpath}"
-    unless ok
-      err = "#{out}\n#{err}" if out != ''
-
-    return ok, err
+  contexts = {}
 
   git = setmetatable {}, __index: (_, cmd) -> (rpath, ...) ->
     need_type cmd, 'string', 1
@@ -42,6 +37,20 @@ class Repo extends StateObject
     return false unless git['rev-parse'] rpath, "--is-inside-work-tree"
     return true
 
+  set_context = switch string.lower _VERSION
+    when "lua 5.1"
+      (fn) =>
+        need_type fn, 'function', 1
+        old_env = _G
+        _G = contexts[@]
+        setfenv fn, contexts[@]
+        ret = {fn!}
+        _G = old_env
+        return unpack ret
+    else
+      _ENV = contexts[@]
+      (fn) -> fn!
+
   new: (name, state_tbl={}) =>
     need_type name, 'string', 1
     need_type state_tbl, 'table', 2
@@ -59,6 +68,104 @@ class Repo extends StateObject
     @path     = "#{var.cache_dir}/repos/#{depath name}"
     @prefix   = "#{var.cache_dir}/roots/#{depath name}"
     @metadata = "#{var.cache_dir}/.metadata/#{depath name}"
+
+    if state_tbl.builder
+      need_type state_tbl.builder, 'function', 'state_tbl.builder'
+      need_type state_tbl.cleaner, 'function', 'state_tbl.cleaner'
+
+      contexts[@] = {
+        :coalesce
+        :tostring
+        :string
+        :ipairs
+        :pairs
+        :table
+        :emit
+        :var
+        block: (name, fn) ->
+          emit "Setting up #{name} ..."
+          run_with_margin fn
+        macos: (fn) ->
+          for_os 'macos', fn
+        linux: (fn) ->
+          for_os 'linux', fn
+        bsd: (fn) ->
+          for_os 'bsd', fn
+        windows: (fn) ->
+          for_os 'bsd', fn
+        vars: {}
+        env: {
+          prefix: @prefix
+          set_var: (key, val) ->
+            contexts[@].vars[key] = val
+          git: setmetatable {}, __index: (_, cmd) -> (...) ->
+            emit "git-#{cmd} #{@name}"
+            assert git[cmd] @path, ...
+          run: (cmd, ...) ->
+            set_env = false
+            command_str = cmd
+            for a in *({...})
+              command_str ..= " '#{a}'"
+            for key, val in pairs contexts[@].vars
+              set_env = true
+              command_str = "#{key}=#{val} #{command_str}"
+            if set_env
+              command_str = "env #{command_str}"
+
+            command_str = "cd #{@path} && #{command_str}"
+            --emit "Running: '#{command_str}'"
+            ok, _, out, err = executeex command_str
+            assert ok, "#{cmd}: #{out} (err:#{err})"
+          file: {
+            replace_lines: (_file, repl, want, conf) ->
+              need_type _file, 'string', 1
+              need_type repl, 'string', 2
+              need_type want, 'string', 3
+
+              file_path = @path .. "/" .. _file
+              assert path.isfile file_path
+
+              if conf then need_type conf, 'table', 4
+
+              replaced = 0
+              new_file = ''
+
+              for _, line in ipairs strx.splitlines file.read file_path
+                unless conf and conf.limit <= replaced
+                  if line\match repl
+                    new_file ..= "\n#{want}"
+                    replaced += 1
+                    continue
+                new_file ..= "\n#{line}"
+
+              assert file.write(file_path, new_file)
+          }
+        }
+      }
+
+      if state_tbl.environment
+        need_type state_tbl.environment, 'table', state_tbl.environment
+
+        for k, v in pairs state_tbl.environment
+          contexts[@].env[k] = v
+
+
+      @builder = ->
+        emit "Running builder ..."
+        run_with_margin ->
+          ok, err = pcall -> set_context @, state_tbl.builder
+          unless ok
+            @error insert_margin err
+            @state = false
+
+      @cleaner = ->
+        emit "Cleaning repository ..."
+        run_with_margin ->
+          ok, err = pcall -> set_context @, state_tbl.cleaner
+          unless ok
+            @error insert_margin err
+            @state = false
+
     super!
 
   check: =>
@@ -68,7 +175,7 @@ class Repo extends StateObject
       return false, "Missing commit metadata" unless path.isfile "#{@metadata}/commit"
       return false, "Missing branch metadata" unless path.isfile "#{@metadata}/branch"
 
-      if @installer
+      if @builder
         return false, "Could not generate prefix" unless ensure_path_exists @prefix
 
       ok, err = git.fetch @path
@@ -85,13 +192,13 @@ class Repo extends StateObject
       unless ok
         @error "git: #{err}"
         return false, "Failed to get latest commit"
-      commit = strx.strip commit, ' \n\r'
+      commit = strx.strip commit, ' \t\n\r'
 
       ok, err, branch = git['rev-parse'] @path, '--abbrev-ref', 'HEAD'
       unless ok
         @error "git: #{err}"
         return false, "Failed to get branch"
-      branch = strx.strip branch, ' \n\r'
+      branch = strx.strip branch, ' \t\n\r'
 
       current_branch = file.read "#{@metadata}/branch"
       current_commit = file.read "#{@metadata}/commit"
@@ -116,14 +223,14 @@ class Repo extends StateObject
     switch @ensure
       when 'present'
         unless is_repo @path
-          emit "git-clone #{@}"
+          emit "git-clone #{@name}"
           ok, err = git.clone @path, "https://#{@git}/#{@name}", "."
           unless ok
             @error "git: #{err}"
             return false
 
         if @checkout and @checkout != ''
-          emit "git-checkout #{@}"
+          emit "git-checkout #{@name}"
           ok, err = git.checkout @path, @branch
           unless ok
             @error "git: #{err}"
@@ -133,17 +240,21 @@ class Repo extends StateObject
         unless ok
           @error "git: #{err}"
           return false
-        branch = strx.strip branch, ' \n\r'
+        branch = strx.strip branch, ' \t\n\r'
 
         ok, err, commit = git['rev-parse'] @path, 'head'
         unless ok
           @error "git: #{err}"
           return false
-        commit = strx.strip commit, ' \n\r'
+        commit = strx.strip commit, ' \t\n\r'
 
         emit "Updated metadata"
         assert file.write("#{@metadata}/commit", commit)
         assert file.write("#{@metadata}/branch", branch)
+
+        if @builder
+          @cleaner!
+          @builder!
 
       when 'absent'
         if path.isdir @path
