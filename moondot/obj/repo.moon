@@ -84,6 +84,7 @@ class Repo extends StateObject
     if state_tbl.builder
       need_type state_tbl.builder, 'function', 'state_tbl.builder'
       need_type state_tbl.cleaner, 'function', 'state_tbl.cleaner'
+      need_type state_tbl.creates, 'table', 'state_tbl.creates'
 
       contexts[@] = {
         :coalesce
@@ -161,7 +162,6 @@ class Repo extends StateObject
         for k, v in pairs state_tbl.environment
           contexts[@].env[k] = v
 
-
       @builder = ->
         emit "Running builder ..."
         run_with_margin ->
@@ -177,6 +177,14 @@ class Repo extends StateObject
           unless ok
             @error insert_margin err
             @state = false
+
+      @creates_files = {}
+      for i, f in ipairs state_tbl.creates
+        need_type f, 'string', "state_tbl.creates[#{i}]"
+
+        f = string.gsub f, '^%#prefix:(.*)$', "#{@prefix}/%1"
+        f = string.gsub f, '^%#repo:(.*)$', "#{@path}/%1"
+        table.insert @creates_files, f
 
     if state_tbl.install
       need_type state_tbl.install, 'table', 'state_tbl.install'
@@ -247,6 +255,12 @@ class Repo extends StateObject
           unless path.link_attrib(link).target == target
             return false, "Invalid symlink found"
 
+      if @creates_files
+        for f in *@creates_files
+          unless path.isfile(f) or path.isdir(f)
+            @needs_build = true
+            return false, "Missing required build result"
+
       return true
 
     @state, reason = chk!
@@ -294,6 +308,11 @@ class Repo extends StateObject
         if @builder and needs_build
           @cleaner!
           @builder!
+
+          for f in *@creates_files
+            unless path.isfile(f) or path.isdir(f)
+              @error "Failed to build #{f}"
+              return false
 
         if @install_files
           for target, link in pairs @install_files
