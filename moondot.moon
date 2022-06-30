@@ -129,8 +129,7 @@ run_with_margin ->
         need_update o
         run_with_margin ->
           emit "Reason: %{yellow}#{reason}%{reset}" if reason
-          o\enforce!
-          emit_state o.state
+          emit_state o\enforce!
       else
         if o.state
           emit "#{o}: %{green}Good"
