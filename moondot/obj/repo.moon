@@ -4,11 +4,23 @@ strx = require"pl.stringx"
 
 import StateObject from require"moondot.obj.stateobject"
 import sandbox_export from require"moondot.env"
-import for_os, depath, ensure_path_exists from require"moondot.utils"
 import var from require"moondot.obj.config"
 import executeex from require"pl.utils"
 import need_type from require"moondot.assertions"
 import emit, run_with_margin, insert_margin from require"moondot.output"
+
+import
+  for_os
+  depath
+  repath
+  need_one
+  need_type
+  is_symlink
+  valid_input
+  replace_home
+  make_symlink
+  ensure_path_exists
+  from require"moondot.utils"
 
 -- TODO: Design env such that items like env.git.#{command} will automatically run inside
 --       of the repositories repo path
@@ -106,6 +118,7 @@ class Repo extends StateObject
             command_str = cmd
             for a in *({...})
               command_str ..= " '#{a}'"
+            emit "Running #{command_str\sub(1, 30)} ..."
             for key, val in pairs contexts[@].vars
               set_env = true
               command_str = "#{key}=#{val} #{command_str}"
@@ -113,7 +126,6 @@ class Repo extends StateObject
               command_str = "env #{command_str}"
 
             command_str = "cd #{@path} && #{command_str}"
-            --emit "Running: '#{command_str}'"
             ok, _, out, err = executeex command_str
             assert ok, "#{cmd}: #{out} (err:#{err})"
           file: {
@@ -166,10 +178,24 @@ class Repo extends StateObject
             @error insert_margin err
             @state = false
 
+    if state_tbl.install
+      need_type state_tbl.install, 'table', 'state_tbl.install'
+
+      @install_files = {}
+      for target, link in pairs state_tbl.install
+        need_type target, 'string', "state_tbl.install[#{target}] (key)"
+        need_type state_tbl.install[target], 'string', "state_tbl.install[#{target}] (value)"
+
+        target = string.gsub target, '^%#prefix:(.*)$', "#{@prefix}/%1"
+        target = string.gsub target, '^%#repo:(.*)$', "#{@path}/%1"
+        @install_files[target] = link
+
     super!
 
   check: =>
     chk = ->
+      @needs_build = true
+
       return false, "Not a valid repository" unless is_repo @path
       return false, "Can't create #{@metadata}" unless ensure_path_exists @metadata
       return false, "Missing commit metadata" unless path.isfile "#{@metadata}/commit"
@@ -177,6 +203,8 @@ class Repo extends StateObject
 
       if @builder
         return false, "Could not generate prefix" unless ensure_path_exists @prefix
+
+      @needs_build = false
 
       ok, err = git.fetch @path
       unless ok
@@ -204,10 +232,20 @@ class Repo extends StateObject
       current_commit = file.read "#{@metadata}/commit"
 
       if current_branch != branch
+        @needs_build = true
         return false, "Branch has changed"
 
       if current_commit != commit
+        @needs_build = true
         return false, "Latest commit has changed"
+
+      if @install_files
+        for target, link in pairs @install_files
+          unless is_symlink link
+            return false, "Missing required symlink"
+
+          unless path.link_attrib(link).target == target
+            return false, "Invalid symlink found"
 
       return true
 
@@ -222,7 +260,9 @@ class Repo extends StateObject
 
     switch @ensure
       when 'present'
+        needs_build = @needs_build
         unless is_repo @path
+          needs_build = true
           emit "git-clone #{@name}"
           ok, err = git.clone @path, "https://#{@git}/#{@name}", "."
           unless ok
@@ -248,13 +288,27 @@ class Repo extends StateObject
           return false
         commit = strx.strip commit, ' \t\n\r'
 
-        emit "Updated metadata"
         assert file.write("#{@metadata}/commit", commit)
         assert file.write("#{@metadata}/branch", branch)
 
-        if @builder
+        if @builder and needs_build
           @cleaner!
           @builder!
+
+        if @install_files
+          for target, link in pairs @install_files
+            if path.isfile link
+              file.delete link
+
+            if path.isdir link
+              path.rmdir link
+
+            ok, err = make_symlink target, link
+            unless ok
+              @error "Failed to link #{link} to #{target}"
+              return false
+
+        return true
 
       when 'absent'
         if path.isdir @path
