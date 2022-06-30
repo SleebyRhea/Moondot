@@ -2,12 +2,17 @@ local private
 private = require("moondot.oo_ext").private
 local emit
 emit = require("moondot.output").emit
-local color = require("ansicolors")
 local StateObject
 do
   local _class_0
-  local data
+  local data, objects
   local _base_0 = {
+    each = function(fn)
+      for _index_0 = 1, #objects do
+        local o = objects[_index_0]
+        fn(o)
+      end
+    end,
     error = function(self, msg)
       return emit("%{red}" .. tostring(self) .. ": " .. tostring(msg))
     end,
@@ -57,7 +62,8 @@ do
         self:critical_error(tostring(cls_name) .. "[" .. tostring(self.name) .. "] - Cannot track a " .. tostring(cls_name) .. " more than once!")
       end
       data[self.__class][self.name] = self
-      return table.insert(data[self.__class].children, self)
+      table.insert(data[self.__class].children, self)
+      return table.insert(objects, self)
     end,
     __base = _base_0,
     __name = "StateObject"
@@ -72,6 +78,7 @@ do
   _base_0.__class = _class_0
   local self = _class_0
   data = private(self)
+  objects = private(self)
   StateObject = _class_0
 end
 return {

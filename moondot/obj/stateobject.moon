@@ -1,11 +1,9 @@
 import private from require"moondot.oo_ext"
 import emit from require"moondot.output"
-color = require"ansicolors"
 
 class StateObject
   data   = private @
   objects = private @
-
 
   each: (fn) ->
     fn o for o in *objects
@@ -37,7 +35,8 @@ class StateObject
       "#{@__class.__name}[#{@name}]"
 
     -- Inject helper methods for state tracking as simple Class functions
-    -- These are done here, as they are not intended to be methods
+    -- These are done here, as they are not intended to be methods and
+    -- they require access to local data structures
     child.__class.count = () -> #(data[child.__class].children)
     child.__class.fetch = (name) -> data[child.__class][name]
     child.__class.each = (fn) ->

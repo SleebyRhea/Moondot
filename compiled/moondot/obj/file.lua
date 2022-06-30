@@ -42,29 +42,30 @@ do
       chk = function()
         if self.kind == 'directory' then
           if not (path.isdir(self.path)) then
-            return false
+            return false, 'Path is not a directory'
           end
           return true
         end
         if not (is_symlink(self.path)) then
-          return false
+          return false, 'Path is not a symlink'
         end
         if not (path.link_attrib(self.path).target == self.source_file) then
-          return false
+          return false, 'Symlink is incorrectly linked'
         end
         if self.kind == 'inline' then
           local contents = file.read(self.path)
           if not (contents == self.inline_data) then
-            return false
+            return false, 'Contents do not match cached data'
           end
         end
         return true
       end
-      self.state = chk()
+      local reason
+      self.state, reason = chk()
       if self.ensure == 'absent' then
         self.state = not self.state
       end
-      return self.state
+      return self.state, reason
     end,
     enforce = function(self)
       local _exp_0 = self.ensure
@@ -256,13 +257,14 @@ do
       if self.kind == 'inline' then
         self.inline_data = self.rendered
       end
-      if not (_class_0.__parent.__base.check(self)) then
+      local ok, reason = _class_0.__parent.__base.check(self)
+      if not (ok) then
         local state = false
-        return self.state
+        return self.state, reason
       end
       if not (md5.sum(self.rendered) == md5.sum(file.read(self.path))) then
         local state = false
-        return self.state
+        return self.state, 'Path does not match cached data'
       end
       return true
     end,

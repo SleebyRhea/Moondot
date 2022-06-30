@@ -1,7 +1,9 @@
 local moondot_version = 'dev-1.0'
 local moon = require("moonscript.base")
 local path = require("pl.path")
+local dir = require("pl.dir")
 local parse_file = tostring(os.getenv('HOME')) .. "/.moondot"
+local plugin_dir = tostring(os.getenv('HOME')) .. "/.moondot.d"
 require("moondot.obj")
 local sandbox, sandbox_export
 do
@@ -30,15 +32,19 @@ do
   local _obj_0 = require("moondot.obj.file")
   File, Template = _obj_0.File, _obj_0.Template
 end
+local StateObject
+StateObject = require("moondot.obj.stateobject").StateObject
 local flags_allowed = {
   file = "f",
   help = "h",
   usage = "u",
-  version = "V"
+  version = "V",
+  ["plugin-dir"] = 'p'
 }
 local flags_w_values = {
   'setvar',
-  'file'
+  'file',
+  'plugin-dir'
 }
 local flags, params = require("pl.app").parse_args(arg, flags_w_values, flags_allowed)
 if flags then
@@ -51,9 +57,16 @@ if flags then
         moondot [options <values>] VAR=VAL VAR2=VAL2 ...
 
       Flags
-        -h --help        This help text
-        -f --file        File to parse (default: ~/.moondot)
-        -V --version     Version string
+        -h --help         This help text
+        -f --file         File to parse (default: ~/.moondot)
+        -p --plugin-dir   Set plugin directory (default: ~/.moondot.d/)
+        -V --version      Version string
+
+      Plugins
+        Moondot supports plugin moonscript files when placed within the currently
+        configured plugin directory. By default, said directory is ~/.moondot.d
+        and the required file name pattern is plugin_${name}.${extension}
+
     ]]))
     os.exit(0)
   end
@@ -63,6 +76,9 @@ if flags then
   if flags.version then
     print(moondot_version)
     os.exit(0)
+  end
+  if flags['plugin-dir'] then
+    plugin_dir = flags['plugin-dir']
   end
   for _index_0 = 1, #params do
     local p = params[_index_0]
@@ -74,6 +90,16 @@ if flags then
         end)
       end
     end
+  end
+end
+if path.isdir(plugin_dir) then
+  package.moonpath = tostring(plugin_dir) .. "/?.moon;" .. tostring(package.moonpath)
+  local _list_0 = dir.getfiles(plugin_dir, "plugin_*.moon")
+  for _index_0 = 1, #_list_0 do
+    local file = _list_0[_index_0]
+    local plugin = file:gsub("^plugin_([a-zA-Z0-9_-]+).moon$", '%1')
+    require("plugin_" .. tostring(plugin))
+    emit("Loaded plugin " .. tostring(plugin))
   end
 end
 sandbox_export({
@@ -129,55 +155,24 @@ emit_state = function(bool)
 end
 emit("Beginning sync run ...")
 return run_with_margin(function()
-  emit("Using cache: " .. tostring(var.cache_dir))
-  if Repo.count() > 0 then
-    emit("Enforcing repository state ...")
-    run_with_margin(function()
-      return Repo.each(function(r)
-        emit(tostring(r) .. ": Pulling remote")
+  return StateObject.each(function(o)
+    if o.check and o.enforce then
+      local ok, reason = o:check()
+      if not (ok) then
+        need_update(o)
         return run_with_margin(function()
-          r:enforce()
-          return emit_state(r.state)
+          if reason then
+            emit("Reason: %{yellow}" .. tostring(reason) .. "%{reset}")
+          end
+          return emit_state(o:enforce())
         end)
-      end)
-    end)
-  end
-  if File.count() > 0 then
-    emit("Enforcing file state ...")
-    run_with_margin(function()
-      return File.each(function(f)
-        if not f:check() then
-          need_update(f)
-          run_with_margin(function()
-            return f:enforce()
-          end)
+      else
+        if o.state then
+          return emit(tostring(o) .. ": %{green}Good")
         else
-          emit(tostring(f) .. ": %{green}Good")
-          return 
+          return emit(tostring(o) .. ": %{red}Failed")
         end
-        return run_with_margin(function()
-          return emit_state(f.state)
-        end)
-      end)
-    end)
-  end
-  if Template.count() > 0 then
-    emit("Enforcing template state ...")
-    return run_with_margin(function()
-      return Template.each(function(f)
-        if not f:check() then
-          need_update(f)
-          run_with_margin(function()
-            return f:enforce()
-          end)
-        else
-          emit(tostring(f) .. ": %{green}Good")
-          return 
-        end
-        return run_with_margin(function()
-          return emit_state(f.state)
-        end)
-      end)
-    end)
-  end
+      end
+    end
+  end)
 end)
