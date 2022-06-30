@@ -2,6 +2,7 @@ moondot_version = 'dev-1.0'
 
 moon = require"moonscript.base"
 path = require"pl.path"
+file = require"pl.file"
 dir  = require"pl.dir"
 parse_file = "#{os.getenv 'HOME'}/.moondot"
 plugin_dir = "#{os.getenv 'HOME'}/.moondot.d"
@@ -10,7 +11,7 @@ require"moondot.obj"
 
 import sandbox, sandbox_export from require"moondot.env"
 import emit, run_with_margin from require"moondot.output"
-import for_os, coalesce, trim from require"moondot.utils"
+import for_os, coalesce, trim, repath from require"moondot.utils"
 import set, var, Config from require"moondot.obj.config"
 import Repo from require"moondot.obj.repo"
 import File, Template from require"moondot.obj.file"
@@ -135,3 +136,14 @@ run_with_margin ->
           emit "#{o}: %{green}Good"
         else
           emit "#{o}: %{red}Failed"
+
+if path.isdir "#{var.cache_dir}/.compiled"
+  for cached_name in *dir.getfiles"#{var.cache_dir}/.compiled"
+    link_name = repath cached_name
+    if path.link_attrib(link_name) == cached_name
+      unless File.fetch(link_name) or Template.fetch(link_name)
+        file.delete cached_name
+        emit "Cleared stale cache file: #{cached_name}"
+        require"pl.util".executeex "unlink #{link_name}"
+        emit "Cleared stale link: #{link_name}"
+
