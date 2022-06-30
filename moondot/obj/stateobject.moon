@@ -3,7 +3,12 @@ import emit from require"moondot.output"
 color = require"ansicolors"
 
 class StateObject
-  data = private @
+  data   = private @
+  objects = private @
+
+
+  each: (fn) ->
+    fn o for o in *objects
 
   error: (msg) =>
     emit "%{red}#{@}: #{msg}"
@@ -19,6 +24,7 @@ class StateObject
 
     data[@.__class][@name] = @
     table.insert data[@.__class].children, @
+    table.insert objects, @
 
   track: () =>
     data[@.__class][@name] = @

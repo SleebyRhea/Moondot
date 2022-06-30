@@ -12,6 +12,7 @@ import for_os, coalesce, trim from require"moondot.utils"
 import set, var, Config from require"moondot.obj.config"
 import Repo from require"moondot.obj.repo"
 import File, Template from require"moondot.obj.file"
+import StateObject from require"moondot.obj.stateobject"
 
 flags_allowed = {
   file: "f"
@@ -100,40 +101,14 @@ emit_state = (bool) ->
 
 emit "Beginning sync run ..."
 run_with_margin ->
-  emit "Using cache: #{var.cache_dir}"
-  if Repo.count! > 0
-    emit "Enforcing repository state ..."
-    run_with_margin -> Repo.each (r) ->
-      ok, reason = r\check!
-      if not ok
-        need_update r
+  StateObject.each (o) ->
+    if o.check and o.enforce then
+      ok, reason = o\check!
+      unless ok
+        need_update o
         run_with_margin ->
-          emit "Reason: #{reason}"
-          r\enforce!
+          emit "Reason: #{reason}" if reason
+          o\enforce!
+          run_with_margin -> emit_state o.state
       else
-        emit "#{r}: %{green}Good"
-        return
-      run_with_margin -> emit_state r.state
-
-  if File.count! > 0
-    emit "Enforcing file state ..."
-    run_with_margin -> File.each (f) ->
-      if not f\check!
-        need_update f
-        run_with_margin -> f\enforce!
-      else
-        emit "#{f}: %{green}Good"
-        return
-      run_with_margin -> emit_state f.state
-
-  if Template.count! > 0
-    emit "Enforcing template state ..."
-    run_with_margin -> Template.each (f) ->
-      if not f\check!
-        need_update f
-        run_with_margin -> f\enforce!
-      else
-        emit "#{f}: %{green}Good"
-        return
-
-      run_with_margin -> emit_state f.state
+        emit "#{o}: %{green}Good"
