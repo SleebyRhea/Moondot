@@ -76,6 +76,7 @@ if flags
 if path.isdir plugin_dir
   package.moonpath = "#{plugin_dir}/?.moon;#{package.moonpath}"
   for file in *dir.getfiles(plugin_dir, "plugin_*.moon")
+    file = path.basename file
     plugin = file\gsub "^plugin_([a-zA-Z0-9_-]+).moon$", '%1'
     require "plugin_#{plugin}"
     emit "Loaded plugin #{plugin}"
