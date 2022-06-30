@@ -104,10 +104,16 @@ run_with_margin ->
   if Repo.count! > 0
     emit "Enforcing repository state ..."
     run_with_margin -> Repo.each (r) ->
-      emit "#{r}: Pulling remote"
-      run_with_margin ->
-        r\enforce!
-        emit_state r.state
+      ok, reason = r\check!
+      if not ok
+        need_update r
+        run_with_margin ->
+          emit "Reason: #{reason}"
+          r\enforce!
+      else
+        emit "#{r}: %{green}Good"
+        return
+      run_with_margin -> emit_state r.state
 
   if File.count! > 0
     emit "Enforcing file state ..."
