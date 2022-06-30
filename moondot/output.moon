@@ -1,4 +1,5 @@
 color = require"ansicolors"
+strx  = require"pl.stringx"
 
 import need_type from require"moondot.assertions"
 
@@ -34,7 +35,14 @@ run_with_margin = (func) ->
 
   return unpack ret
 
+insert_margin = (str) ->
+  new_str, str_lines = '', strx.splitlines str
+  for i, line in ipairs str_lines
+    new_str ..= "#{output_margin}#{line}\n"
+  return new_str
+
 {
   :emit
+  :insert_margin
   :run_with_margin
 }
