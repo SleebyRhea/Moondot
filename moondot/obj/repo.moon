@@ -1,8 +1,9 @@
 path = require"pl.path"
+strx = require"pl.stringx"
 
 import StateObject from require"moondot.obj.stateobject"
 import sandbox_export from require"moondot.env"
-import depath, ensure_path_exists from require"moondot.utils"
+import depath, repath, ensure_path_exists from require"moondot.utils"
 import var from require"moondot.obj.config"
 import executeex from require"pl.utils"
 import need_type from require"moondot.assertions"
@@ -16,15 +17,19 @@ class Repo extends StateObject
 
     return ok, err
 
-  fetch = (rpath) ->
-    ok, _, out, err = executeex "cd #{rpath} && git fetch"
-    unless ok
-      err = "#{out}\n#{err}" if out != ''
+  git = setmetatable {}, __index: (_, cmd) -> (rpath, ...) ->
+    need_type rpath, 'string', 1
 
-    return ok, err
+    ensure_path_exists rpath
 
-  pull = (rpath) ->
-    ok, _, out, err = executeex "cd #{rpath} && git pull"
+    exec_str = "cd #{rpath} && git #{cmd}"
+    for a in *({...})
+      exec_str ..= " #{a}"
+
+    repo_name = repath rpath\match ".+/([^/]+)$"
+    emit "git-#{cmd} #{repo_name}"
+
+    ok, _, out, err = executeex exec_str
     unless ok
       err = "#{out}\n#{err}" if out != ''
 
@@ -52,20 +57,17 @@ class Repo extends StateObject
     switch @ensure
       when 'present'
         unless path.isdir @path
-          emit "git-clone #{@name}"
-          ok, err = clone "https://#{@git}/#{@name}", @path
+          ok, err = git.clone @path, "https://#{@git}/#{@name}"
           unless ok
             @error "git: #{err}"
             return false
 
-        emit "git-fetch #{@name}"
-        ok, err = fetch @path
+        ok, err = git.fetch @path
         unless ok
           @error "git: #{err}"
           return false
 
-        emit "git-pull #{@name}"
-        ok, err = pull "#{@path}"
+        ok, err = git.pull @path
         unless ok
           @error "git: #{err}"
           return false
