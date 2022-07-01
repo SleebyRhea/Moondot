@@ -5,6 +5,7 @@ strx  = require"pl.stringx"
 md5   = require"md5"
 
 import dump from require"pl.pretty"
+import executeex from require"pl.utils"
 import sandbox_export from require"moondot.env"
 import getters, setters, private from require"moondot.oo_ext"
 import emit, add_margin from require"moondot.output"
@@ -73,6 +74,12 @@ class File extends StateObject
           inline: state_tbl.inline
           directory: state_tbl.directory
         }
+
+        if state_tbl.chmod
+          need_type state_tbl.chmod, 'string', 'state_tbl.chmod'
+          unless state_tbl.chmod\match '^[012][0124567][0124567][0124567]$'
+            @critical_error "Invalid chmod declardation for #{@} (got: #{state_tbl.chmod})"
+          @chmod = state_tbl.chmod
 
     switch @kind
       when 'source'
@@ -162,6 +169,12 @@ class File extends StateObject
       unless ok
         @error "Failed to link #{@path} to #{@source_file}"
         return false
+
+      if @chmod
+        ok, _, out, err = executeex "chmod #{@chmod} #{@path}"
+        unless ok
+          @error "Failed to chmod #{@path} to #{@chmod}"
+          return false
 
       return true
 
