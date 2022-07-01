@@ -70,53 +70,6 @@ class Rock extends StateObject
       if state_tbl.ensure
         state_tbl.ensure = valid_input state_tbl.ensure, 'invalid',  { 'present',  'absent' }
 
-      if state_tbl.get_ldflags
-        ld_flags = ''
-        switch type state_tbl.get_ldflags
-          when 'string'
-            ok, _, out, err = executeex set_cmd_env(state_tbl.get_ldflags,{
-              LUA_PATH:  ''
-              LUA_CPATH: ''
-            })
-            unless ok
-              @error "failed to get ldflags: \n#{insert_margin out}"
-              return false
-            ld_flags = strx.strip(out, ' \t\r\n')
-          when 'table'
-            for command in *ipairs state_tbl.get_ldflags
-              ok, _, out, err = executeex set_cmd_env(state_tbl.get_ldflags,{
-                LUA_PATH:  ''
-                LUA_CPATH: ''
-              })
-              unless ok
-                @error "failed to get ldflags: \n#{insert_margin out}\n#{insert_margin err}"
-                return false
-              ld_flags = "#{ld_flags} #{strx.strip(out, ' \t\r\n')}"
-        @ld_flags = ld_flags
-
-      if state_tbl.get_cflags
-        cflags = ''
-        switch type state_tbl.get_ldflags
-          when 'string'
-            ok, _, out, err = executeex set_cmd_env(state_tbl.get_cflags,{
-              LUA_PATH:  ''
-              LUA_CPATH: ''
-            })
-            unless ok
-              @error "failed to get cflags: \n#{insert_margin out}\n#{insert_margin err}"
-              return false
-            cflags = strx.strip(out, ' \t\r\n')
-          when 'table'
-            for command in *ipairs state_tbl.get_ldflags
-              ok, _, out, err = executeex set_cmd_env(state_tbl.get_cflags,{
-                LUA_PATH:  ''
-                LUA_CPATH: ''
-              })
-              unless ok
-                @error "failed to get cflags: \n#{insert_margin out}"
-                return false
-              cflags = "#{ld_flags} #{strx.strip(out, ' \t\r\n')}"
-        @cflags = cflags
       @ensure = state_tbl.ensure or @ensure
 
     super!
@@ -147,23 +100,6 @@ class Rock extends StateObject
 
     switch @ensure
       when 'present'
-        if @ld_flags or @cflags
-          ok, _, out = luarocks.config
-          unless ok
-            @error "failed to get luarocks configuration"
-            return false
-
-          -- TODO: LUAROCKS_SYSCONFDIR needs to be set via set_cmd_env cmd, {
-          --    LUAROCKS_SYSCONFDIR: "temp location"
-          -- }
-          -- with the contents of a file called config-${version}.lua containing
-          -- the output of the prior out variable. Further, the variable "LD_FLAGS"
-          -- needs to be adjusted to include the contents of @ld_flags
-          --
-          -- The same must be done for @cflags, furthermore there should be a post
-          -- run hook developed to cleanup such temporary files following a run
-
-
         emit "luarocks-install #{@name}"
         return run_with_margin ->
           ok, code, out = luarocks.install @name

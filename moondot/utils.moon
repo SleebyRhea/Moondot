@@ -2,6 +2,7 @@ lfs  = require"lfs"
 dir  = require"pl.dir"
 strx = require"pl.stringx"
 path = require"pl.path"
+file = require"pl.file"
 
 import emit from require"moondot.output"
 import executeex from require"pl.utils"
@@ -146,6 +147,30 @@ trim = (indent, str) ->
 
   return new_str
 
+replace_lines = (file_path, repl, want, conf) ->
+  need_type file_path, 'string', 1
+  need_type repl, 'string', 2
+  need_type want, 'string', 3
+
+  assert path.isfile file_path
+
+  if conf then need_type conf, 'table', 4
+
+  replaced = 0
+  new_file = ''
+
+  for _, line in ipairs strx.splitlines file.read file_path
+    unless conf and conf.limit <= replaced
+      if line\match repl
+        new_file ..= "\n#{want}"
+        replaced += 1
+        continue
+    new_file ..= "\n#{line}"
+
+  if replaced > 0
+    assert file.write(file_path, new_file)
+    emit "#{file_path}: Replaced #{replaced} line#{replaced > 1 and 's' or ''}"
+
 {
   :trim
   :for_os
@@ -157,5 +182,6 @@ trim = (indent, str) ->
   :make_symlink
   :depath
   :repath
+  :replace_lines
   :ensure_path_exists
 }
