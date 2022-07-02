@@ -200,27 +200,30 @@ class Template extends File
 
     if state_tbl.environment
       need_type state_tbl.environment, 'table', 'state_tbl.environment'
+      @environment = state_tbl.environment
+    else
+      @environment = {}
 
-    local err
-    local tmpl
-    switch @kind
-      when 'inline'
-        tmpl, err = etlua.compile @inline_data
-      when 'source'
-        tmpl, err = etlua.compile file.read @source_file
-
-    if err
-      @error "Failed to render #{@}: #{err}"
-      return false
-
-    -- Ensure that no matter what, our source_file is always overridden to be cached
-    -- rather than linked to a file directly
-    @rendered = tmpl(state_tbl.environment or {})
     @source_file = "#{var.cache_dir}/.compiled/#{depath @path}"
 
   check: =>
-    if @kind == 'inline'
-      @inline_data = @rendered
+    local err
+    local tmpl
+
+    switch @kind
+      when 'inline'
+        tmpl, err = etlua.compile @inline_data
+        if err
+          @error "Failed to render #{@}: #{err}"
+          return false
+        @inline_data = tmpl @environment
+
+      when 'source'
+        tmpl, err = etlua.compile file.read @source_file
+        if err
+          @error "Failed to render #{@}: #{err}"
+          return false
+        @rendered = tmpl @environment
 
     ok, reason = super!
     unless ok
