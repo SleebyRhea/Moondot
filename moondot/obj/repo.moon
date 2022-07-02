@@ -74,10 +74,11 @@ class Repo extends StateObject
     else
       @git = "github.com"
 
+    @safe_name = name\gsub '/', '+'
     @ensure   = 'present'
-    @path     = "#{var.cache_dir}/repos/#{depath name}"
-    @prefix   = "#{var.cache_dir}/roots/#{depath name}"
-    @metadata = "#{var.cache_dir}/.metadata/#{depath name}"
+    @path     = "#{var.cache_dir}/repos/#{@safe_name}"
+    @prefix   = "#{var.cache_dir}/roots/#{@safe_name}"
+    @metadata = "#{var.cache_dir}/.metadata/#{@safe_name}"
 
     if state_tbl.builder
       need_type state_tbl.builder, 'function', 'state_tbl.builder'
