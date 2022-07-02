@@ -2,6 +2,7 @@ local lfs = require("lfs")
 local dir = require("pl.dir")
 local strx = require("pl.stringx")
 local path = require("pl.path")
+local file = require("pl.file")
 local emit
 emit = require("moondot.output").emit
 local executeex
@@ -135,6 +136,40 @@ trim = function(indent, str)
   end
   return new_str
 end
+local replace_lines
+replace_lines = function(file_path, repl, want, conf)
+  need_type(file_path, 'string', 1)
+  need_type(repl, 'string', 2)
+  need_type(want, 'string', 3)
+  assert(path.isfile(file_path))
+  if conf then
+    need_type(conf, 'table', 4)
+  end
+  local replaced = 0
+  local new_file = ''
+  for _, line in ipairs(strx.splitlines(file.read(file_path))) do
+    local _continue_0 = false
+    repeat
+      if not (conf and conf.limit <= replaced) then
+        if line:match(repl) then
+          new_file = new_file .. "\n" .. tostring(want)
+          replaced = replaced + 1
+          _continue_0 = true
+          break
+        end
+      end
+      new_file = new_file .. "\n" .. tostring(line)
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
+    end
+  end
+  if replaced > 0 then
+    assert(file.write(file_path, new_file))
+    return emit(tostring(file_path) .. ": Replaced " .. tostring(replaced) .. " line" .. tostring(replaced > 1 and 's' or ''))
+  end
+end
 return {
   trim = trim,
   for_os = for_os,
@@ -146,5 +181,6 @@ return {
   make_symlink = make_symlink,
   depath = depath,
   repath = repath,
+  replace_lines = replace_lines,
   ensure_path_exists = ensure_path_exists
 }

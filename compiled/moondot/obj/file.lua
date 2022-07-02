@@ -5,6 +5,8 @@ local strx = require("pl.stringx")
 local md5 = require("md5")
 local dump
 dump = require("pl.pretty").dump
+local executeex
+executeex = require("pl.utils").executeex
 local sandbox_export
 sandbox_export = require("moondot.env").sandbox_export
 local getters, setters, private
@@ -108,6 +110,14 @@ do
           self:error("Failed to link " .. tostring(self.path) .. " to " .. tostring(self.source_file))
           return false
         end
+        if self.chmod then
+          local _, out
+          ok, _, out, err = executeex("chmod " .. tostring(self.chmod) .. " " .. tostring(self.path))
+          if not (ok) then
+            self:error("Failed to chmod " .. tostring(self.path) .. " to " .. tostring(self.chmod))
+            return false
+          end
+        end
         return true
       elseif 'absent' == _exp_0 then
         local ok, err = file.delete(self.source_file)
@@ -156,6 +166,13 @@ do
           inline = state_tbl.inline,
           directory = state_tbl.directory
         })
+        if state_tbl.chmod then
+          need_type(state_tbl.chmod, 'string', 'state_tbl.chmod')
+          if not (state_tbl.chmod:match('^[012][0124567][0124567][0124567]$')) then
+            self:critical_error("Invalid chmod declardation for " .. tostring(self) .. " (got: " .. tostring(state_tbl.chmod) .. ")")
+          end
+          self.chmod = state_tbl.chmod
+        end
       end
       local _exp_1 = self.kind
       if 'source' == _exp_1 then

@@ -53,7 +53,6 @@ if flags
         Moondot supports plugin moonscript files when placed within the currently
         configured plugin directory. By default, said directory is ~/.moondot.d
         and the required file name pattern is plugin_${name}.${extension}
-
     ]]
     os.exit 0
 

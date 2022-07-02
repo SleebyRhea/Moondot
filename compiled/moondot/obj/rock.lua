@@ -1,4 +1,5 @@
 local path = require("pl.path")
+local strx = require("pl.stringx")
 local need_type
 need_type = require("moondot.assertions").need_type
 local sandbox_export
@@ -22,7 +23,7 @@ StateObject = require("moondot.obj.stateobject").StateObject
 local Rock
 do
   local _class_0
-  local luarocks
+  local set_cmd_env, luarocks
   local _parent_0 = StateObject
   local _base_0 = {
     check = function(self)
@@ -31,13 +32,13 @@ do
         if not (var.luarocks and var.luarocks ~= 'none') then
           return false, "Luarocks variable unset"
         end
-        local ok, code, out, err = luarocks.show(self.name)
+        local ok, code, out = luarocks.show(self.name)
         if not (ok) then
           local _exp_0 = code
           if 1 == _exp_0 then
             return false, "Rock " .. tostring(self.name) .. " is not installed"
           else
-            return false, insert_margin("Luarocks encountered an error attempting to run: \n" .. tostring(out) .. "\n" .. tostring(err))
+            return false, "Luarocks encountered an error attempting to run:\n" .. tostring(out)
           end
         end
         return true, 'Rock is currently installed'
@@ -58,9 +59,10 @@ do
       if 'present' == _exp_0 then
         emit("luarocks-install " .. tostring(self.name))
         return run_with_margin(function()
-          local ok, code, out, err = luarocks.install(self.name)
+          local ok, code, out = luarocks.install(self.name)
           if not (ok) then
-            self:error("luarocks: " .. tostring(code) .. ":\n" .. tostring(insert_margin(out)) .. "\n" .. tostring(insert_margin(err)))
+            self:error("luarocks: " .. tostring(code) .. ":\n" .. tostring(out))
+            return false
           end
           emit(out)
           return true
@@ -68,15 +70,16 @@ do
       elseif 'absent' == _exp_0 then
         emit("luarocks-remove " .. tostring(self.name))
         return run_with_margin(function()
-          local ok, code, out, err = luarocks.remove(self.name)
+          local ok, code, out = luarocks.remove(self.name)
           if not (ok) then
-            self:error("luarocks: " .. tostring(code) .. ":\n" .. tostring(insert_margin(out)) .. "\n" .. tostring(insert_margin(err)))
+            self:error("luarocks: " .. tostring(code) .. ":\n" .. tostring(out))
             return false
           end
           emit(out)
           return true
         end)
       else
+        emit("Invalid ensure: " .. tostring(self.ensure))
         return false
       end
     end
@@ -86,18 +89,18 @@ do
   _class_0 = setmetatable({
     __init = function(self, name, state_tbl)
       need_type(name, 'string', 1)
+      self.name = name
+      self.ensure = 'present'
       if state_tbl then
         need_type(state_tbl, 'table', 2)
-        local err_var
-        state_tbl.ensure, err_var = valid_input(state_tbl.ensure, 'invalid', {
-          'present',
-          'absent'
-        })
-        self.ensure = state_tbl.ensure
-      else
-        self.ensure = 'present'
+        if state_tbl.ensure then
+          state_tbl.ensure = valid_input(state_tbl.ensure, 'invalid', {
+            'present',
+            'absent'
+          })
+        end
+        self.ensure = state_tbl.ensure or self.ensure
       end
-      self.name = name
       return _class_0.__parent.__init(self)
     end,
     __base = _base_0,
@@ -136,6 +139,25 @@ do
     end
     return dehomed
   end)
+  Config('luarocks_prefix', 'none', function(want, current)
+    if not (want ~= nil) then
+      return nil
+    end
+    if not (type(want) == 'string') then
+      return current
+    end
+    local dehomed = path.expanduser(want)
+    if not (path.isdir(want)) then
+      return current
+    end
+    return dehomed
+  end)
+  set_cmd_env = function(str, env_tbl)
+    for key, val in pairs(env_tbl) do
+      str = tostring(key) .. "=" .. tostring(val) .. " " .. tostring(str)
+    end
+    return "env " .. tostring(str)
+  end
   luarocks = setmetatable({ }, {
     __index = function(_, cmd)
       return function(...)
@@ -144,23 +166,33 @@ do
           return false, 'missing luarocks installation'
         end
         local arg_str = ''
+        local env_vars = {
+          LUA_PATH = '',
+          LUA_CPATH = ''
+        }
         local _list_0 = ({
           ...
         })
         for _index_0 = 1, #_list_0 do
           local a = _list_0[_index_0]
-          arg_str = arg_str .. tostring(a) .. " "
+          local _exp_0 = type(a)
+          if 'string' == _exp_0 then
+            arg_str = arg_str .. tostring(a) .. " "
+          elseif 'table' == _exp_0 then
+            for k, v in pairs(a) do
+              env_vars[k] = v
+            end
+          end
         end
-        local exec_str = "env LUA_PATH= LUA_CPATH= " .. tostring(var.luarocks) .. " " .. tostring(cmd) .. " " .. tostring(arg_str)
+        local exec_str = set_cmd_env(tostring(var.luarocks) .. " " .. tostring(cmd), env_vars)
+        if arg_str ~= '' then
+          exec_str = tostring(exec_str) .. " " .. tostring(arg_str)
+        end
+        emit("Running: " .. tostring(exec_str))
         local ok, code, out, err = executeex(exec_str)
         out = insert_margin("\n" .. tostring(out))
         err = insert_margin("\n" .. tostring(err))
-        if not (ok) then
-          if out ~= '' then
-            err = tostring(out) .. "\n" .. tostring(err)
-          end
-        end
-        return ok, code, out, err
+        return ok, code, (out .. err)
       end
     end
   })
