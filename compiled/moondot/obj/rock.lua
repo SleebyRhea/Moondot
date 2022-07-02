@@ -188,7 +188,6 @@ do
         if arg_str ~= '' then
           exec_str = tostring(exec_str) .. " " .. tostring(arg_str)
         end
-        emit("Running: " .. tostring(exec_str))
         local ok, code, out, err = executeex(exec_str)
         out = insert_margin("\n" .. tostring(out))
         err = insert_margin("\n" .. tostring(err))

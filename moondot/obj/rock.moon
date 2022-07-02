@@ -54,7 +54,6 @@ class Rock extends StateObject
     exec_str = set_cmd_env "#{var.luarocks} #{cmd}", env_vars
     if arg_str != '' then exec_str = "#{exec_str} #{arg_str}"
 
-    emit "Running: #{exec_str}"
     ok, code, out, err = executeex exec_str
     out = insert_margin "\n#{out}"
     err = insert_margin "\n#{err}"
