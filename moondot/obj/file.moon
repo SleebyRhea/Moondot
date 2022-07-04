@@ -91,6 +91,7 @@ class File extends StateObject
             return false
           if @repo.ensure != 'present'
             @error "Cannot reference repo marked as #{@repo.ensure}"
+            return false
           @source_file = "#{@repo.path}/#{repo_path}"
 
         else
