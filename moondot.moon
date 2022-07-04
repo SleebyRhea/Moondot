@@ -137,13 +137,21 @@ run_with_margin ->
         else
           emit "#{o}: %{red}Failed"
 
-if path.isdir "#{var.cache_dir}/.compiled"
-  for cached_name in *dir.getfiles"#{var.cache_dir}/.compiled"
-    link_name = repath cached_name
-    if path.link_attrib(link_name) == cached_name
-      unless File.fetch(link_name) or Template.fetch(link_name)
-        file.delete cached_name
-        emit "Cleared stale cache file: #{cached_name}"
-        require"pl.util".executeex "unlink #{link_name}"
-        emit "Cleared stale link: #{link_name}"
+emit "Pruning cache ..."
+run_with_margin ->
+  deleted = 0
+  if path.isdir "#{var.cache_dir}/.compiled"
+    for cached_path in *dir.getfiles"#{var.cache_dir}/.compiled"
+      link_path = repath cached_path\gsub("^#{var.cache_dir}/.compiled/", "")
+      unless File.fetch(link_path) or Template.fetch(link_path)
+        emit "Found stale cache file: #{cached_path}"
+        deleted += 1
+        run_with_margin ->
+          emit "Deleted cache file: #{cached_path}"
+          file.delete cached_path
+          if path.link_attrib(link_path) == cached_path
+              require"pl.util".executeex "unlink #{link_path}"
+              emit "Cleared stale link: #{link_path}"
 
+  unless deleted > 0
+    emit "No stale cache files located"
