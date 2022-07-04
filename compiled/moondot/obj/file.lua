@@ -188,6 +188,7 @@ do
           end
           if self.repo.ensure ~= 'present' then
             self:error("Cannot reference repo marked as " .. tostring(self.repo.ensure))
+            return false
           end
           self.source_file = tostring(self.repo.path) .. "/" .. tostring(repo_path)
         else
@@ -271,8 +272,23 @@ do
   local _parent_0 = File
   local _base_0 = {
     check = function(self)
-      if self.kind == 'inline' then
-        self.inline_data = self.rendered
+      local err
+      local tmpl
+      local _exp_0 = self.kind
+      if 'inline' == _exp_0 then
+        tmpl, err = etlua.compile(self.inline_data)
+        if err then
+          self:error("Failed to render " .. tostring(self) .. ": " .. tostring(err))
+          return false
+        end
+        self.inline_data = tmpl(self.environment)
+      elseif 'source' == _exp_0 then
+        tmpl, err = etlua.compile(file.read(self.source_file))
+        if err then
+          self:error("Failed to render " .. tostring(self) .. ": " .. tostring(err))
+          return false
+        end
+        self.rendered = tmpl(self.environment)
       end
       local ok, reason = _class_0.__parent.__base.check(self)
       if not (ok) then
@@ -302,20 +318,10 @@ do
       _class_0.__parent.__init(self, filepath, state_tbl)
       if state_tbl.environment then
         need_type(state_tbl.environment, 'table', 'state_tbl.environment')
+        self.environment = state_tbl.environment
+      else
+        self.environment = { }
       end
-      local err
-      local tmpl
-      local _exp_0 = self.kind
-      if 'inline' == _exp_0 then
-        tmpl, err = etlua.compile(self.inline_data)
-      elseif 'source' == _exp_0 then
-        tmpl, err = etlua.compile(file.read(self.source_file))
-      end
-      if err then
-        self:error("Failed to render " .. tostring(self) .. ": " .. tostring(err))
-        return false
-      end
-      self.rendered = tmpl(state_tbl.environment or { })
       self.source_file = tostring(var.cache_dir) .. "/.compiled/" .. tostring(depath(self.path))
     end,
     __base = _base_0,

@@ -20,7 +20,6 @@ import StateObject from require"moondot.obj.stateobject"
 flags_allowed = {
   file: "f"
   help: "h"
-  usage: "u"
   version: "V"
   "plugin-dir": 'p'
 }

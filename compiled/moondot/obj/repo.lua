@@ -213,10 +213,11 @@ do
       else
         self.git = "github.com"
       end
+      self.safe_name = name:gsub('/', '+')
       self.ensure = 'present'
-      self.path = tostring(var.cache_dir) .. "/repos/" .. tostring(depath(name))
-      self.prefix = tostring(var.cache_dir) .. "/roots/" .. tostring(depath(name))
-      self.metadata = tostring(var.cache_dir) .. "/.metadata/" .. tostring(depath(name))
+      self.path = tostring(var.cache_dir) .. "/repos/" .. tostring(self.safe_name)
+      self.prefix = tostring(var.cache_dir) .. "/roots/" .. tostring(self.safe_name)
+      self.metadata = tostring(var.cache_dir) .. "/.metadata/" .. tostring(self.safe_name)
       if state_tbl.builder then
         need_type(state_tbl.builder, 'function', 'state_tbl.builder')
         need_type(state_tbl.cleaner, 'function', 'state_tbl.cleaner')

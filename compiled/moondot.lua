@@ -38,7 +38,6 @@ StateObject = require("moondot.obj.stateobject").StateObject
 local flags_allowed = {
   file = "f",
   help = "h",
-  usage = "u",
   version = "V",
   ["plugin-dir"] = 'p'
 }
@@ -177,18 +176,29 @@ run_with_margin(function()
     end
   end)
 end)
-if path.isdir(tostring(var.cache_dir) .. "/.compiled") then
-  local _list_0 = dir.getfiles(tostring(var.cache_dir) .. "/.compiled")
-  for _index_0 = 1, #_list_0 do
-    local cached_name = _list_0[_index_0]
-    local link_name = repath(cached_name)
-    if path.link_attrib(link_name) == cached_name then
-      if not (File.fetch(link_name) or Template.fetch(link_name)) then
-        file.delete(cached_name)
-        emit("Cleared stale cache file: " .. tostring(cached_name))
-        require("pl.util").executeex("unlink " .. tostring(link_name))
-        emit("Cleared stale link: " .. tostring(link_name))
+emit("Pruning cache ...")
+return run_with_margin(function()
+  local deleted = 0
+  if path.isdir(tostring(var.cache_dir) .. "/.compiled") then
+    local _list_0 = dir.getfiles(tostring(var.cache_dir) .. "/.compiled")
+    for _index_0 = 1, #_list_0 do
+      local cached_path = _list_0[_index_0]
+      local link_path = repath(cached_path:gsub("^" .. tostring(var.cache_dir) .. "/.compiled/", ""))
+      if not (File.fetch(link_path) or Template.fetch(link_path)) then
+        emit("Found stale cache file: " .. tostring(cached_path))
+        deleted = deleted + 1
+        run_with_margin(function()
+          emit("Deleted cache file: " .. tostring(cached_path))
+          file.delete(cached_path)
+          if path.link_attrib(link_path) == cached_path then
+            require("pl.util").executeex("unlink " .. tostring(link_path))
+            return emit("Cleared stale link: " .. tostring(link_path))
+          end
+        end)
       end
     end
   end
-end
+  if not (deleted > 0) then
+    return emit("No stale cache files located")
+  end
+end)
