@@ -171,8 +171,16 @@ replace_lines = (file_path, repl, want, conf) ->
     assert file.write(file_path, new_file)
     emit "#{file_path}: Replaced #{replaced} line#{replaced > 1 and 's' or ''}"
 
+chomp = (str) ->
+  need_type str, 'string', 1
+
+  str = str\gsub "^[%S+\n\r]", ''
+  str = str\gsub "[%S+\n\r]$", ''
+  return str
+
 {
   :trim
+  :chomp
   :for_os
   :need_one
   :coalesce

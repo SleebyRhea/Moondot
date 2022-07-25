@@ -79,6 +79,10 @@ if path.isdir plugin_dir
     require "plugin_#{plugin}"
     emit "Loaded plugin #{plugin}"
 
+import command from require"moondot.command"
+import chomp from require"moondot.utils"
+
+mt = setmetatable
 sandbox_export
   block: (name, fn) ->
     emit "Setting up #{name} ..."
@@ -93,8 +97,10 @@ sandbox_export
     for_os 'bsd', fn
   :coalesce
   :tostring
+  :command
   :string
   :ipairs
+  :chomp
   :pairs
   :table
 
@@ -102,10 +108,11 @@ unless path.isfile parse_file
   print"Please supply a .moondot file located at: #{parse_file}"
   os.exit 1
 
-if conf = moon.loadfile parse_file
+conf, err = moon.loadfile parse_file
+if conf
   sandbox conf
 else
-  print"Please supply a valid .moondot file located at #{parse_file}"
+  print"Please supply a valid .moondot file located at #{parse_file}:\n#{err}"
   os.exit 1
 
 print!
