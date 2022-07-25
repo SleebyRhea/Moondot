@@ -31,6 +31,12 @@ class Rock extends StateObject
       str = "#{key}=#{val} #{str}"
     return "env #{str}"
 
+  set_var_dirs = (dir_tbl) ->
+    str = ''
+    for key, val in pairs dir_tbl
+      str = "#{str} #{key}=#{val}"
+    return str
+
   luarocks = setmetatable {}, __index: (_, cmd) -> (...) ->
     need_type cmd, 'string', 1
 
@@ -69,6 +75,13 @@ class Rock extends StateObject
       if state_tbl.ensure
         state_tbl.ensure = valid_input state_tbl.ensure, 'invalid',  { 'present',  'absent' }
 
+      if state_tbl.variable_dirs
+        need_type state_tbl.variable_dirs, 'table', 'state_tbl.variable_dirs'
+        for k, v in pairs state_tbl.variable_dirs
+          need_type k, 'string', 'state_tbl.variable_dirs[key]'
+          need_type v, 'string', 'state_tbl.variable_dirs[value]'
+          @variable_dirs = state_tbl.variable_dirs
+
       @ensure = state_tbl.ensure or @ensure
 
     super!
@@ -101,7 +114,7 @@ class Rock extends StateObject
       when 'present'
         emit "luarocks-install #{@name}"
         return run_with_margin ->
-          ok, code, out = luarocks.install @name
+          ok, code, out = luarocks.install @name, set_var_dirs(@variable_dirs or {})
           unless ok
             @error "luarocks: #{code}:\n#{out}"
             return false
@@ -111,7 +124,7 @@ class Rock extends StateObject
       when 'absent'
         emit "luarocks-remove #{@name}"
         return run_with_margin ->
-          ok, code, out = luarocks.remove @name
+          ok, code, out = luarocks.remove @name, set_var_dirs(@variable_dirs or {})
           unless ok
             @error "luarocks: #{code}:\n#{out}"
             return false
