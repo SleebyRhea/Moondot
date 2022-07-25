@@ -169,6 +169,7 @@ class File extends StateObject
           @error "@inline_data is #{type @inline_data}, expected a string"
           return false
 
+        emit "Saving contents to #{@source_file}"
         ok, err = file.write @source_file, @inline_data
         unless ok
           @error "Failed to write data to #{@source_file}"
@@ -230,6 +231,8 @@ class Template extends File
       return false
 
     @rendered = tmpl @environment
+    if @kind == 'inline'
+      @inline_data = @rendered
 
     ok, reason = super!
     unless ok
