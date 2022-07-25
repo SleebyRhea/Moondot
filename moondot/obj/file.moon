@@ -161,10 +161,18 @@ class File extends StateObject
 
       -- ... cache file, make symlink, etc etc
       if @kind == 'inline'
-          ok, err = file.write @source_file, @inline_data
-          unless ok
-            @error "Failed to write data to #{@source_file}"
-            return false
+        unless @source_file
+          @error "@source_file is #{type @source_file}, expected a string"
+          return false
+
+        unless @inline_data
+          @error "@inline_data is #{type @inline_data}, expected a string"
+          return false
+
+        ok, err = file.write @source_file, @inline_data
+        unless ok
+          @error "Failed to write data to #{@source_file}"
+          return false
 
       ok, err = make_symlink @source_file, @path
       unless ok
@@ -214,17 +222,14 @@ class Template extends File
     switch @kind
       when 'inline'
         tmpl, err = etlua.compile @inline_data
-        if err
-          @error "Failed to render #{@}: #{err}"
-          return false
-        @inline_data = tmpl @environment
-
       when 'source'
         tmpl, err = etlua.compile file.read @source_file
-        if err
-          @error "Failed to render #{@}: #{err}"
-          return false
-        @rendered = tmpl @environment
+
+    if err
+      @error "Failed to render #{@}: #{err}"
+      return false
+
+    @rendered = tmpl @environment
 
     ok, reason = super!
     unless ok
