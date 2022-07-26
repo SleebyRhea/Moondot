@@ -1,5 +1,5 @@
 # Moondot
-Dead simple dotfile management
+Dead simple user-local configuration management
 
 ## Installation
 - Stable:
