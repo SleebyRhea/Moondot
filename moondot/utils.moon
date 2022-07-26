@@ -178,6 +178,12 @@ chomp = (str) ->
   str = str\gsub "[%S+\n\r]$", ''
   return str
 
+wordify = (word, singular, plural) ->
+  singular = word .. singular
+  plural   = word .. plural
+  (number) ->
+    number != 1 and plural or singular
+
 {
   :trim
   :chomp
@@ -190,6 +196,7 @@ chomp = (str) ->
   :make_symlink
   :depath
   :repath
+  :wordify
   :replace_lines
   :ensure_path_exists
 }
