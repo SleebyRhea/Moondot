@@ -16,10 +16,10 @@ do
   local _obj_0 = require("moondot.output")
   emit, run_with_margin = _obj_0.emit, _obj_0.run_with_margin
 end
-local for_os, coalesce, trim, repath
+local for_os, coalesce, trim, repath, wordify
 do
   local _obj_0 = require("moondot.utils")
-  for_os, coalesce, trim, repath = _obj_0.for_os, _obj_0.coalesce, _obj_0.trim, _obj_0.repath
+  for_os, coalesce, trim, repath, wordify = _obj_0.for_os, _obj_0.coalesce, _obj_0.trim, _obj_0.repath, _obj_0.wordify
 end
 local set, var, Config
 do
@@ -48,47 +48,8 @@ local flags_w_values = {
 }
 local flags, params = require("pl.app").parse_args(arg, flags_w_values, flags_allowed)
 if flags then
-  local indent = '      '
-  if flags.help then
-    print(trim(indent, [[      Moondot
-        User configuration file manager written in Moonscript`
-
-      Usage
-        moondot [options <values>] VAR=VAL VAR2=VAL2 ...
-
-      Flags
-        -h --help         This help text
-        -f --file         File to parse (default: ~/.moondot)
-        -p --plugin-dir   Set plugin directory (default: ~/.moondot.d/)
-        -V --version      Version string
-
-      Plugins
-        Moondot supports plugin moonscript files when placed within the currently
-        configured plugin directory. By default, said directory is ~/.moondot.d
-        and the required file name pattern is plugin_${name}.${extension}
-    ]]))
-    os.exit(0)
-  end
-  if flags.file then
-    parse_file = flags.file
-  end
-  if flags.version then
-    print(moondot_version)
-    os.exit(0)
-  end
   if flags['plugin-dir'] then
     plugin_dir = flags['plugin-dir']
-  end
-  for _index_0 = 1, #params do
-    local p = params[_index_0]
-    local key, val = p:match("^([a-zA-Z0-9_-]+)=([a-zA-Z0-9_-]+)$")
-    if key and val then
-      if not (set(key, val)) then
-        Config(key, val, function(v)
-          return v
-        end)
-      end
-    end
   end
 end
 if path.isdir(plugin_dir) then
@@ -102,6 +63,45 @@ if path.isdir(plugin_dir) then
     emit("Loaded plugin " .. tostring(plugin))
   end
 end
+if flags then
+  local indent = '      '
+  if flags.help then
+    local configs = ''
+    local entry_w = wordify('entr', 'y', 'ies')
+    Config.each(function(c)
+      if type(c.value) == 'table' then
+        configs = configs .. "  " .. tostring(c) .. ": Table with " .. tostring(#c.value) .. " " .. tostring(entry_w(#c.value)) .. "\n"
+      else
+        configs = configs .. "  " .. tostring(c) .. ": '" .. tostring(c.value or 'none') .. "'\n"
+      end
+    end)
+    print(trim(indent, "\n      Moondot\n        User configuration file manager written in Moonscript`\n\n      Usage\n        moondot [options <values>] VAR=VAL VAR2=VAL2 ...\n\n      Flags\n        -h --help         This help text\n        -f --file         File to parse (default: ~/.moondot)\n        -p --plugin-dir   Set plugin directory (default: ~/.moondot.d/)\n        -V --version      Version string\n\n      Plugins\n        Moondot supports plugin moonscript files when placed within the currently\n        configured plugin directory. By default, said directory is ~/.moondot.d\n        and the required file name pattern is plugin_${name}.moon\n\n      Configurations\n      " .. tostring(configs)))
+    os.exit(0)
+  end
+  if flags.file then
+    parse_file = flags.file
+  end
+  if flags.version then
+    print(moondot_version)
+    os.exit(0)
+  end
+  for _index_0 = 1, #params do
+    local p = params[_index_0]
+    local key, val = p:match("^([a-zA-Z0-9_-]+)=([a-zA-Z0-9_-]+)$")
+    if key and val then
+      if not (set(key, val)) then
+        Config(key, val, function(v)
+          return v
+        end)
+      end
+    end
+  end
+end
+local command
+command = require("moondot.command").command
+local chomp
+chomp = require("moondot.utils").chomp
+local mt = setmetatable
 sandbox_export({
   block = function(name, fn)
     emit("Setting up " .. tostring(name) .. " ...")
@@ -117,12 +117,14 @@ sandbox_export({
     return for_os('bsd', fn)
   end,
   windows = function(fn)
-    return for_os('bsd', fn)
+    return for_os('windows', fn)
   end,
   coalesce = coalesce,
   tostring = tostring,
+  command = command,
   string = string,
   ipairs = ipairs,
+  chomp = chomp,
   pairs = pairs,
   table = table
 })
@@ -130,14 +132,12 @@ if not (path.isfile(parse_file)) then
   print("Please supply a .moondot file located at: " .. tostring(parse_file))
   os.exit(1)
 end
-do
-  local conf = moon.loadfile(parse_file)
-  if conf then
-    sandbox(conf)
-  else
-    print("Please supply a valid .moondot file located at " .. tostring(parse_file))
-    os.exit(1)
-  end
+local conf, err = moon.loadfile(parse_file)
+if conf then
+  sandbox(conf)
+else
+  print("Please supply a valid .moondot file located at " .. tostring(parse_file) .. ":\n" .. tostring(err))
+  os.exit(1)
 end
 print()
 local need_update

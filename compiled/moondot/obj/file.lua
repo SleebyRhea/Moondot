@@ -99,6 +99,15 @@ do
           path.rmdir(self.path)
         end
         if self.kind == 'inline' then
+          if not (self.source_file) then
+            self:error("@source_file is " .. tostring(type(self.source_file)) .. ", expected a string")
+            return false
+          end
+          if not (self.inline_data) then
+            self:error("@inline_data is " .. tostring(type(self.inline_data)) .. ", expected a string")
+            return false
+          end
+          emit("Saving contents to " .. tostring(self.source_file))
           local ok, err = file.write(self.source_file, self.inline_data)
           if not (ok) then
             self:error("Failed to write data to " .. tostring(self.source_file))
@@ -277,18 +286,16 @@ do
       local _exp_0 = self.kind
       if 'inline' == _exp_0 then
         tmpl, err = etlua.compile(self.inline_data)
-        if err then
-          self:error("Failed to render " .. tostring(self) .. ": " .. tostring(err))
-          return false
-        end
-        self.inline_data = tmpl(self.environment)
       elseif 'source' == _exp_0 then
         tmpl, err = etlua.compile(file.read(self.source_file))
-        if err then
-          self:error("Failed to render " .. tostring(self) .. ": " .. tostring(err))
-          return false
-        end
-        self.rendered = tmpl(self.environment)
+      end
+      if err then
+        self:error("Failed to render " .. tostring(self) .. ": " .. tostring(err))
+        return false
+      end
+      self.rendered = tmpl(self.environment)
+      if self.kind == 'inline' then
+        self.inline_data = self.rendered
       end
       local ok, reason = _class_0.__parent.__base.check(self)
       if not (ok) then

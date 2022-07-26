@@ -23,7 +23,7 @@ StateObject = require("moondot.obj.stateobject").StateObject
 local Rock
 do
   local _class_0
-  local set_cmd_env, luarocks
+  local set_cmd_env, set_var_dirs, luarocks
   local _parent_0 = StateObject
   local _base_0 = {
     check = function(self)
@@ -59,7 +59,7 @@ do
       if 'present' == _exp_0 then
         emit("luarocks-install " .. tostring(self.name))
         return run_with_margin(function()
-          local ok, code, out = luarocks.install(self.name)
+          local ok, code, out = luarocks.install(self.name, set_var_dirs(self.variable_dirs or { }))
           if not (ok) then
             self:error("luarocks: " .. tostring(code) .. ":\n" .. tostring(out))
             return false
@@ -70,7 +70,7 @@ do
       elseif 'absent' == _exp_0 then
         emit("luarocks-remove " .. tostring(self.name))
         return run_with_margin(function()
-          local ok, code, out = luarocks.remove(self.name)
+          local ok, code, out = luarocks.remove(self.name, set_var_dirs(self.variable_dirs or { }))
           if not (ok) then
             self:error("luarocks: " .. tostring(code) .. ":\n" .. tostring(out))
             return false
@@ -98,6 +98,14 @@ do
             'present',
             'absent'
           })
+        end
+        if state_tbl.variable_dirs then
+          need_type(state_tbl.variable_dirs, 'table', 'state_tbl.variable_dirs')
+          for k, v in pairs(state_tbl.variable_dirs) do
+            need_type(k, 'string', 'state_tbl.variable_dirs[key]')
+            need_type(v, 'string', 'state_tbl.variable_dirs[value]')
+            self.variable_dirs = state_tbl.variable_dirs
+          end
         end
         self.ensure = state_tbl.ensure or self.ensure
       end
@@ -157,6 +165,13 @@ do
       str = tostring(key) .. "=" .. tostring(val) .. " " .. tostring(str)
     end
     return "env " .. tostring(str)
+  end
+  set_var_dirs = function(dir_tbl)
+    local str = ''
+    for key, val in pairs(dir_tbl) do
+      str = tostring(str) .. " " .. tostring(key) .. "=" .. tostring(val)
+    end
+    return str
   end
   luarocks = setmetatable({ }, {
     __index = function(_, cmd)

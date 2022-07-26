@@ -170,8 +170,24 @@ replace_lines = function(file_path, repl, want, conf)
     return emit(tostring(file_path) .. ": Replaced " .. tostring(replaced) .. " line" .. tostring(replaced > 1 and 's' or ''))
   end
 end
+local chomp
+chomp = function(str)
+  need_type(str, 'string', 1)
+  str = str:gsub("^[%S+\n\r]", '')
+  str = str:gsub("[%S+\n\r]$", '')
+  return str
+end
+local wordify
+wordify = function(word, singular, plural)
+  singular = word .. singular
+  plural = word .. plural
+  return function(number)
+    return number ~= 1 and plural or singular
+  end
+end
 return {
   trim = trim,
+  chomp = chomp,
   for_os = for_os,
   need_one = need_one,
   coalesce = coalesce,
@@ -181,6 +197,7 @@ return {
   make_symlink = make_symlink,
   depath = depath,
   repath = repath,
+  wordify = wordify,
   replace_lines = replace_lines,
   ensure_path_exists = ensure_path_exists
 }
