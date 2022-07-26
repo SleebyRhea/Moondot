@@ -23,6 +23,8 @@ import
   ensure_path_exists
   from require"moondot.utils"
 
+
+--- Remote git repository
 class Repo extends StateObject
   contexts = {}
 
@@ -61,6 +63,9 @@ class Repo extends StateObject
       _ENV = contexts[@]
       (fn) -> fn!
 
+  --- Track new Git repo
+  -- @tparam string Name of the git repo
+  -- @tparam table? Local repo configuration
   new: (name, state_tbl={}) =>
     need_type name, 'string', 1
     need_type state_tbl, 'table', 2
