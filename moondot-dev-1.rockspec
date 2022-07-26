@@ -30,6 +30,7 @@ build = {
     ["moondot.oo_ext"] = "compiled/moondot/oo_ext.lua",
     ["moondot.output"] = "compiled/moondot/output.lua",
     ["moondot.assertions"] = "compiled/moondot/assertions.lua",
+    ["moondot.command"] = "compiled/moondot/command.lua",
   },
   install = {
     bin = {
