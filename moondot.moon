@@ -104,7 +104,7 @@ sandbox_export
   bsd: (fn) ->
     for_os 'bsd', fn
   windows: (fn) ->
-    for_os 'bsd', fn
+    for_os 'windows', fn
   :coalesce
   :tostring
   :command
