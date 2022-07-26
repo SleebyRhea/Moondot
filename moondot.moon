@@ -11,7 +11,7 @@ require"moondot.obj"
 
 import sandbox, sandbox_export from require"moondot.env"
 import emit, run_with_margin from require"moondot.output"
-import for_os, coalesce, trim, repath from require"moondot.utils"
+import for_os, coalesce, trim, repath, wordify from require"moondot.utils"
 import set, var, Config from require"moondot.obj.config"
 import Repo from require"moondot.obj.repo"
 import File, Template from require"moondot.obj.file"
@@ -32,10 +32,29 @@ flags_w_values = {
 
 flags, params = require"pl.app".parse_args arg, flags_w_values, flags_allowed
 if flags
-  indent = '      '
+  if flags['plugin-dir']
+    plugin_dir = flags['plugin-dir']
 
+if path.isdir plugin_dir
+  package.moonpath = "#{plugin_dir}/?.moon;#{package.moonpath}"
+  for file in *dir.getfiles(plugin_dir, "plugin_*.moon")
+    file = path.basename file
+    plugin = file\gsub "^plugin_([a-zA-Z0-9_-]+).moon$", '%1'
+    require "plugin_#{plugin}"
+    emit "Loaded plugin #{plugin}"
+
+if flags
+  indent = '      '
   if flags.help
-    print trim indent, [[
+    configs = ''
+    entry_w = wordify 'entr', 'y', 'ies'
+    Config.each (c) ->
+      if type(c.value) == 'table'
+        configs ..= "  #{c}: Table with #{#c.value} #{entry_w #c.value}\n"
+      else
+        configs ..= "  #{c}: '#{c.value or 'none'}'\n"
+
+    print trim indent, "
       Moondot
         User configuration file manager written in Moonscript`
 
@@ -52,7 +71,9 @@ if flags
         Moondot supports plugin moonscript files when placed within the currently
         configured plugin directory. By default, said directory is ~/.moondot.d
         and the required file name pattern is plugin_${name}.${extension}
-    ]]
+
+      Configurations
+      #{configs}"
     os.exit 0
 
   if flags.file
@@ -62,22 +83,11 @@ if flags
     print moondot_version
     os.exit 0
 
-  if flags['plugin-dir']
-    plugin_dir = flags['plugin-dir']
-
   for p in *params
     key, val = p\match "^([a-zA-Z0-9_-]+)=([a-zA-Z0-9_-]+)$"
     if key and val
       unless set key, val
         Config key, val, (v) -> v
-
-if path.isdir plugin_dir
-  package.moonpath = "#{plugin_dir}/?.moon;#{package.moonpath}"
-  for file in *dir.getfiles(plugin_dir, "plugin_*.moon")
-    file = path.basename file
-    plugin = file\gsub "^plugin_([a-zA-Z0-9_-]+).moon$", '%1'
-    require "plugin_#{plugin}"
-    emit "Loaded plugin #{plugin}"
 
 import command from require"moondot.command"
 import chomp from require"moondot.utils"
