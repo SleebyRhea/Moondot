@@ -34,10 +34,11 @@ class Repo extends StateObject
 
     ensure_path_exists rpath
 
-    exec_str = "cd #{rpath} && git #{cmd}"
+    exec_str = "git -C '#{rpath}' #{cmd}"
     for a in *({...})
       exec_str ..= " #{a}"
 
+	emit "Running: #{exec_str}"
     ok, _, out, err = executeex exec_str
     unless ok
       err = "#{out}\n#{err}" if out != ''
@@ -235,7 +236,7 @@ class Repo extends StateObject
         @error "git: #{err}"
         return false, "Failed to git-pull"
 
-      ok, err, commit = git['rev-parse'] @path, 'head'
+      ok, err, commit = git['rev-parse'] @path, 'HEAD'
       unless ok
         @error "git: #{err}"
         return false, "Failed to get latest commit"
@@ -307,7 +308,7 @@ class Repo extends StateObject
           return false
         branch = strx.strip branch, ' \t\n\r'
 
-        ok, err, commit = git['rev-parse'] @path, 'head'
+        ok, err, commit = git['rev-parse'] @path, 'HEAD'
         unless ok
           @error "git: #{err}"
           return false

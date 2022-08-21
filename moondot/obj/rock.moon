@@ -58,7 +58,12 @@ class Rock extends StateObject
             env_vars[k] = v
 
     exec_str = set_cmd_env "#{var.luarocks} #{cmd}", env_vars
-    if arg_str != '' then exec_str = "#{exec_str} #{arg_str}"
+    if var.luarocks_prefix and var.luarocks_prefix != ''  
+      exec_str = "#{exec_str} --tree #{var.luarocks_prefix}"
+    
+    if arg_str != ''
+      exec_str = "#{exec_str} #{arg_str}"
+      
 
     ok, code, out, err = executeex exec_str
     out = insert_margin "\n#{out}"
