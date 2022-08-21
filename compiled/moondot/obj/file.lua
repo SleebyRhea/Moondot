@@ -282,22 +282,27 @@ do
   local _base_0 = {
     check = function(self)
       local err
+      local msg
       local tmpl
-      local _exp_0 = self.kind
-      if 'inline' == _exp_0 then
-        tmpl, err = etlua.compile(self.inline_data)
-      elseif 'source' == _exp_0 then
-        tmpl, err = etlua.compile(file.read(self.source_file))
-      end
-      if err then
-        self:error("Failed to render " .. tostring(self) .. ": " .. tostring(err))
+      local ok
+      ok, err = pcall(function()
+        local _exp_0 = self.kind
+        if 'inline' == _exp_0 then
+          tmpl, msg = etlua.compile(self.inline_data)
+        elseif 'source' == _exp_0 then
+          tmpl, msg = etlua.compile(file.read(self.template_file))
+        end
+      end)
+      if not ok or msg then
+        self:error("Failed to render " .. tostring(self.source_file) .. ": " .. tostring(msg))
         return false
       end
       self.rendered = tmpl(self.environment)
       if self.kind == 'inline' then
         self.inline_data = self.rendered
       end
-      local ok, reason = _class_0.__parent.__base.check(self)
+      local reason
+      ok, reason = _class_0.__parent.__base.check(self)
       if not (ok) then
         local state = false
         return self.state, reason
@@ -329,6 +334,7 @@ do
       else
         self.environment = { }
       end
+      self.template_file = self.source_file
       self.source_file = tostring(var.cache_dir) .. "/.compiled/" .. tostring(depath(self.path))
     end,
     __base = _base_0,

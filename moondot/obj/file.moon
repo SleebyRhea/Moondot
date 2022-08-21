@@ -214,20 +214,22 @@ class Template extends File
     else
       @environment = {}
 
+    @template_file = @source_file
     @source_file = "#{var.cache_dir}/.compiled/#{depath @path}"
 
   check: =>
     local err
+    local msg
     local tmpl
 
-    switch @kind
+    ok, err = pcall -> switch @kind
       when 'inline'
-        tmpl, err = etlua.compile @inline_data
+        tmpl, msg = etlua.compile @inline_data
       when 'source'
-        tmpl, err = etlua.compile file.read @source_file
+        tmpl, msg = etlua.compile file.read @template_file
 
-    if err
-      @error "Failed to render #{@}: #{err}"
+    if not ok or msg
+      @error "Failed to render #{@source_file}: #{msg}"
       return false
 
     @rendered = tmpl @environment
