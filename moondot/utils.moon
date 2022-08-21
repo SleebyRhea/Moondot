@@ -98,7 +98,7 @@ make_symlink = (target, destination) ->
   switch current_os_type
     when 'darwin', 'linux', 'bsd'
       emit "Linking #{destination} -> #{target}"
-      ok, code, out, err = executeex "ln -sf #{target} #{destination}"
+      ok, code, out, err = executeex "ln -sf '#{target}' '#{destination}'"
       error "make_symlink: ln returned code #{code}:\n#{out}\n#{err}\n" unless ok
       return true
 

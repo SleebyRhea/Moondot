@@ -80,7 +80,7 @@ make_symlink = function(target, destination)
   local _exp_0 = current_os_type
   if 'darwin' == _exp_0 or 'linux' == _exp_0 or 'bsd' == _exp_0 then
     emit("Linking " .. tostring(destination) .. " -> " .. tostring(target))
-    local ok, code, out, err = executeex("ln -sf " .. tostring(target) .. " " .. tostring(destination))
+    local ok, code, out, err = executeex("ln -sf '" .. tostring(target) .. "' '" .. tostring(destination) .. "'")
     if not (ok) then
       error("make_symlink: ln returned code " .. tostring(code) .. ":\n" .. tostring(out) .. "\n" .. tostring(err) .. "\n")
     end
