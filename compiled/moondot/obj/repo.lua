@@ -408,12 +408,13 @@ do
         need_type(cmd, 'string', 1)
         need_type(rpath, 'string', 2)
         ensure_path_exists(rpath)
+        local exec_str = "git -C '" .. tostring(rpath) .. "' " .. tostring(cmd)
         local _list_0 = ({
           ...
         })
         for _index_0 = 1, #_list_0 do
           local a = _list_0[_index_0]
-          local exec_str = exec_str .. " " .. tostring(a)
+          exec_str = exec_str .. " " .. tostring(a)
         end
         emit("Running: " .. tostring(exec_str))
         local ok, out, err
