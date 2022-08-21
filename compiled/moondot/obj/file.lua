@@ -187,7 +187,7 @@ do
       if 'source' == _exp_1 then
         if strx.at(state_tbl.source, 1) == '@' then
           local repo_name = strx.lstrip(strx.split(state_tbl.source, ":")[1], '@')
-          local repo_path = state_tbl.source:gsub("%@" .. tostring(repo_name) .. "%:", '')
+          local repo_path = strx.replace(state_tbl.source, strx.split(state_tbl.source, ":")[1] .. ":", '', 1)
           do
             self.repo = Repo.fetch(repo_name)
             if not self.repo then
