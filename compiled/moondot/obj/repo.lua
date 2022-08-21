@@ -416,7 +416,6 @@ do
           local a = _list_0[_index_0]
           exec_str = exec_str .. " " .. tostring(a)
         end
-        emit("Running: " .. tostring(exec_str))
         local ok, out, err
         ok, _, out, err = executeex(exec_str)
         if not (ok) then

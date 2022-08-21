@@ -37,7 +37,6 @@ class Repo extends StateObject
     for a in *({...})
       exec_str ..= " #{a}"
 
-	emit "Running: #{exec_str}"
     ok, _, out, err = executeex exec_str
     unless ok
       err = "#{out}\n#{err}" if out != ''
