@@ -200,6 +200,9 @@ do
           end
         end
         local exec_str = set_cmd_env(tostring(var.luarocks) .. " " .. tostring(cmd), env_vars)
+        if var.luarocks_prefix and var.luarocks_prefix ~= '' then
+          exec_str = tostring(exec_str) .. " --tree " .. tostring(var.luarocks_prefix)
+        end
         if arg_str ~= '' then
           exec_str = tostring(exec_str) .. " " .. tostring(arg_str)
         end

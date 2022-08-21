@@ -60,7 +60,7 @@ do
           return false, "Failed to git-pull"
         end
         local commit
-        ok, err, commit = git['rev-parse'](self.path, 'head')
+        ok, err, commit = git['rev-parse'](self.path, 'HEAD')
         if not (ok) then
           self:error("git: " .. tostring(err))
           return false, "Failed to get latest commit"
@@ -149,7 +149,7 @@ do
         end
         branch = strx.strip(branch, ' \t\n\r')
         local commit
-        ok, err, commit = git['rev-parse'](self.path, 'head')
+        ok, err, commit = git['rev-parse'](self.path, 'HEAD')
         if not (ok) then
           self:error("git: " .. tostring(err))
           return false
@@ -408,14 +408,14 @@ do
         need_type(cmd, 'string', 1)
         need_type(rpath, 'string', 2)
         ensure_path_exists(rpath)
-        local exec_str = "cd " .. tostring(rpath) .. " && git " .. tostring(cmd)
         local _list_0 = ({
           ...
         })
         for _index_0 = 1, #_list_0 do
           local a = _list_0[_index_0]
-          exec_str = exec_str .. " " .. tostring(a)
+          local exec_str = exec_str .. " " .. tostring(a)
         end
+        emit("Running: " .. tostring(exec_str))
         local ok, out, err
         ok, _, out, err = executeex(exec_str)
         if not (ok) then

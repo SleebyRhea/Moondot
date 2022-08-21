@@ -33,8 +33,6 @@ class Repo extends StateObject
     need_type rpath, 'string', 2
 
     ensure_path_exists rpath
-
-    exec_str = "git -C '#{rpath}' #{cmd}"
     for a in *({...})
       exec_str ..= " #{a}"
 

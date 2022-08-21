@@ -113,6 +113,7 @@ sandbox_export
   :chomp
   :pairs
   :table
+  :emit
 
 unless path.isfile parse_file
   print"Please supply a .moondot file located at: #{parse_file}"

@@ -126,7 +126,8 @@ sandbox_export({
   ipairs = ipairs,
   chomp = chomp,
   pairs = pairs,
-  table = table
+  table = table,
+  emit = emit
 })
 if not (path.isfile(parse_file)) then
   print("Please supply a .moondot file located at: " .. tostring(parse_file))
