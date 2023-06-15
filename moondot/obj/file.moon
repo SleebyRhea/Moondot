@@ -241,7 +241,7 @@ class Template extends File
       state = false
       return @state, reason
 
-    unless md5.sum(@rendered) == md5.sum(file.read @path)
+    unless md5.sum(@rendered or "") == md5.sum(file.read(@path) or "")
       state = false
       return @state, 'Path does not match cached data'
 
