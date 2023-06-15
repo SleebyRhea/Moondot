@@ -1,10 +1,10 @@
 package = "moondot"
 version = "dev-1"
 source = {
-  url = "https://github.com/SleepyFugu/moondot"
+  url = "https://github.com/SleebyRhea/moondot"
 }
 description = {
-  homepage = "https://github.com/SleepyFugu/moondot",
+  homepage = "https://github.com/SleebyRhea/moondot",
   license = "bsd-3-clause"
 }
 dependencies = {

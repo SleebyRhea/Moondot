@@ -4,7 +4,7 @@ Dead simple user-local configuration management
 ## Installation
 - This project is not yet ready to be placed on Luarocks, but will be in the future. For now, you can do the following:
   ```
-  git clone https://github.com/SleepyFugu/moondot
+  git clone https://github.com/SleebyRhea/moondot
   cd moondot
   luarocks make ./moondot-dev-1.rockspec
   ```
