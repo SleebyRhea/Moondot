@@ -307,7 +307,7 @@ do
         local state = false
         return self.state, reason
       end
-      if not (md5.sum(self.rendered) == md5.sum(file.read(self.path))) then
+      if not (md5.sum(self.rendered or "") == md5.sum(file.read(self.path) or "")) then
         local state = false
         return self.state, 'Path does not match cached data'
       end

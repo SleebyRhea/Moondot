@@ -274,7 +274,7 @@ do
                 local a = _list_0[_index_0]
                 command_str = command_str .. " '" .. tostring(a) .. "'"
               end
-              emit("Running " .. tostring(command_str:sub(1, 30)) .. " ...")
+              emit("Running " .. tostring(command_str) .. " ...")
               for key, val in pairs(contexts[self].vars) do
                 set_env = true
                 command_str = tostring(key) .. "=" .. tostring(val) .. " " .. tostring(command_str)

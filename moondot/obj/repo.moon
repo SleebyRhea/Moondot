@@ -124,7 +124,7 @@ class Repo extends StateObject
             command_str = cmd
             for a in *({...})
               command_str ..= " '#{a}'"
-            emit "Running #{command_str\sub(1, 30)} ..."
+            emit "Running #{command_str} ..."
             for key, val in pairs contexts[@].vars
               set_env = true
               command_str = "#{key}=#{val} #{command_str}"
