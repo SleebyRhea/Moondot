@@ -304,11 +304,15 @@ do
       local reason
       ok, reason = _class_0.__parent.__base.check(self)
       if not (ok) then
-        local state = false
+        self.state = false
         return self.state, reason
       end
-      if not (md5.sum(self.rendered or "") == md5.sum(file.read(self.path) or "")) then
-        local state = false
+      if not (self.rendered and self.path and file.read(self.path)) then
+        self.state = false
+        return self.state, 'Cached file or path is empty'
+      end
+      if not (md5.sum(self.rendered) == md5.sum(file.read(self.path))) then
+        self.state = false
         return self.state, 'Path does not match cached data'
       end
       return true

@@ -238,11 +238,15 @@ class Template extends File
 
     ok, reason = super!
     unless ok
-      state = false
+      @state = false
       return @state, reason
 
-    unless md5.sum(@rendered or "") == md5.sum(file.read(@path) or "")
-      state = false
+    unless @rendered and @path and file.read(@path)
+      @state = false
+      return @state, 'Cached file or path is empty'
+
+    unless md5.sum(@rendered) == md5.sum(file.read @path)
+      @state = false
       return @state, 'Path does not match cached data'
 
     return true
