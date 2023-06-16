@@ -318,6 +318,9 @@ do
       return true
     end,
     enforce = function(self)
+      if not (self.rendered) then
+        return false
+      end
       local _exp_0 = self.kind
       if 'source' == _exp_0 then
         file.write(self.source_file, self.rendered)

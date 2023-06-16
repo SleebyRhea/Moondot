@@ -252,6 +252,7 @@ class Template extends File
     return true
 
   enforce: =>
+    return false unless @rendered
     switch @kind
       when 'source'
         file.write @source_file, @rendered
